@@ -9,6 +9,12 @@ module.exports = {
           dark: "#C1121F",
           light: "#F8AD9D",
         },
+        surface: "#FFF7F7",
+        "border-brand": "#F0D5D7",
+        gold: "#D4AF37",
+      },
+      fontFamily: {
+        display: ["ui-serif", "Georgia", "Times New Roman", "serif"],
       },
     },
   },

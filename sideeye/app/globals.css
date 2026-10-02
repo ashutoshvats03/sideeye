@@ -3,12 +3,43 @@
 @tailwind utilities;
 
 :root {
+  /* Brand primitives */
   --brand-red: #e63946;
-  --brand-dark: #c1121f;
-  --brand-light: #f8ad9d;
+  --brand-red-dark: #c1121f;
+  --brand-red-light: #f8ad9d;
+
+  /* Semantic tokens */
+  --color-bg: #ffffff;
+  --color-surface: #fff7f7;
+  --color-text: #171717;
+  --color-text-muted: #6b6b6b;
+  --color-border: #f0d5d7;
+  --color-gold: #d4af37;
+
+  /* Spacing scale (4px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+
+  /* Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-full: 9999px;
 }
 
 body {
-  background: #fff;
-  color: #171717;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Brand display style for headings */
+.font-display {
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  font-weight: 900;
+  letter-spacing: -0.01em;
 }
