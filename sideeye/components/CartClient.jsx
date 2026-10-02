@@ -6,7 +6,7 @@ import Link from "next/link";
 import { formatPaise } from "../lib/money.js";
 import { FREE_SHIPPING_ABOVE_PAISE } from "../lib/pricing.js";
 import { MAX_QTY_PER_LINE } from "../lib/cart.js";
-import { readCart, updateItem, removeItem } from "../lib/cart-storage.js";
+import { readCart, updateItem, removeItem, clearCart } from "../lib/cart-storage.js";
 
 /**
  * The cart page body.
@@ -91,6 +91,13 @@ export default function CartClient() {
     await refresh(next);
   }
 
+  async function clearBag() {
+    if (!window.confirm("Remove everything from your bag?")) return;
+    const next = clearCart();
+    invalidateCoupon();
+    await refresh(next);
+  }
+
   async function applyCoupon(event) {
     event.preventDefault();
     setBusy(true);
@@ -171,7 +178,20 @@ export default function CartClient() {
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-      <ul className="space-y-4" aria-label="Items in your bag">
+      <div>
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-sm text-neutral-600" aria-live="polite">
+            {lines.length} {lines.length === 1 ? "item" : "items"} in your bag
+          </p>
+          <button
+            type="button"
+            onClick={clearBag}
+            className="rounded-lg px-3 py-2 text-sm font-semibold text-neutral-500 underline-offset-2 hover:text-brand hover:underline focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+          >
+            Clear bag
+          </button>
+        </div>
+        <ul className="space-y-4" aria-label="Items in your bag">
         {lines.map(({ product, qty }) => (
           <li
             key={product.slug}
@@ -191,25 +211,16 @@ export default function CartClient() {
             </Link>
 
             <div className="flex flex-1 flex-col">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <Link
-                    href={`/product/${product.slug}`}
-                    className="font-bold hover:text-brand"
-                  >
-                    {product.name}
-                  </Link>
-                  <p className="text-sm text-neutral-600">
-                    {formatPaise(product.pricePaise)}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => dropLine(product.slug)}
-                  className="text-sm text-neutral-500 underline-offset-2 hover:text-brand hover:underline focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+              <div>
+                <Link
+                  href={`/product/${product.slug}`}
+                  className="font-bold hover:text-brand"
                 >
-                  Remove
-                </button>
+                  {product.name}
+                </Link>
+                <p className="text-sm text-neutral-600">
+                  {formatPaise(product.pricePaise)}
+                </p>
               </div>
 
               <div className="mt-auto flex items-center gap-3 pt-3">
@@ -240,6 +251,14 @@ export default function CartClient() {
                     +
                   </button>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => dropLine(product.slug)}
+                  aria-label={`Remove ${product.name} from bag`}
+                  className="rounded-xl border-2 border-neutral-300 px-3 py-1.5 text-sm font-bold text-neutral-600 transition hover:border-brand hover:text-brand focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+                >
+                  Remove
+                </button>
                 <span className="ml-auto font-bold">
                   {formatPaise(product.pricePaise * qty)}
                 </span>
@@ -247,7 +266,8 @@ export default function CartClient() {
             </div>
           </li>
         ))}
-      </ul>
+        </ul>
+      </div>
 
       <aside className="h-fit rounded-3xl bg-white p-6 ring-1 ring-neutral-200 lg:sticky lg:top-24">
         <h2 className="font-display text-xl font-bold">Order summary</h2>
