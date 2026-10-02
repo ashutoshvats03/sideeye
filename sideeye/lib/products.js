@@ -23,8 +23,15 @@ import {
   selectRelatedProducts,
 } from "./catalog.js";
 
-/** Fields a product card needs. Keeps list queries narrow and avoids shipping cart data. */
-const CARD_SELECT = {
+/**
+ * Fields a product card needs. Keeps list queries narrow and avoids shipping cart data.
+ *
+ * `isActive` is selected even though the WHERE clauses already filter on it, because
+ * `selectRelatedProducts` re-checks `isVisibleProduct` in JS. Omitting it made that check
+ * fail for every row and silently emptied the "you may also like" rail. `lib/products.test.js`
+ * pins the contract that this select carries every field the selectors read.
+ */
+export const CARD_SELECT = {
   id: true,
   name: true,
   slug: true,
@@ -33,6 +40,7 @@ const CARD_SELECT = {
   images: true,
   vibes: true,
   stockQty: true,
+  isActive: true,
   category: { select: { name: true, slug: true } },
 };
 

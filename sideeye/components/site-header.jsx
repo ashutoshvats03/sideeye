@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCurrentUser } from "../lib/guards.js";
 import { isAdminRole } from "../lib/roles.js";
 import { signOutAction } from "../app/actions.js";
+import CartBadge from "./CartBadge.jsx";
 
 /**
  * Site header with live auth state.
@@ -39,6 +40,8 @@ export default async function SiteHeader() {
           >
             Shop
           </Link>
+
+          <CartBadge />
 
           {user ? (
             <>

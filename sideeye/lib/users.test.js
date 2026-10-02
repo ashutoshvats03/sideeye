@@ -23,7 +23,8 @@ function testEmail(label) {
 }
 
 afterAll(async () => {
-  // Reviews/addresses/orders cascade; nothing else should reference these rows.
+  // Address, UserCoupon and Review cascade off User; Order does NOT (order history must
+  // outlive the account row), so this only works because these tests create no orders.
   await prisma.user.deleteMany({ where: { email: { in: createdEmails } } });
   await prisma.$disconnect();
 });
