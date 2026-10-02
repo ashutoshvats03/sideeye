@@ -23,8 +23,9 @@ export const SORTS = {
 /** Applied when the `sort` param is absent or unrecognised. */
 export const DEFAULT_SORT = "newest";
 
-/** Longest search term we will send to the database. */
-const MAX_QUERY_LENGTH = 100;
+/** Longest search term we will send to the database. Exported so the shop page caps the
+ *  same way when it normalises the `q` URL param, instead of keeping a second magic number. */
+export const MAX_QUERY_LENGTH = 100;
 
 /**
  * Build the Prisma `where` clause for a product listing.
