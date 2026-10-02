@@ -181,20 +181,24 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
         <h2 id="coupon-heading" className="font-display text-xl font-bold">
           Coupon
         </h2>
-        <form onSubmit={applyCoupon} className="mt-4 flex gap-3">
+        <div className="mt-4 flex gap-3">
           <input
             value={couponCode}
             onChange={(e) => setCouponCode(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") applyCoupon(e);
+            }}
             placeholder="Enter code"
             className="flex-1 rounded-xl border-2 border-neutral-300 px-4 py-3 uppercase focus:border-brand focus:outline-none"
           />
           <button
-            type="submit"
+            type="button"
+            onClick={applyCoupon}
             className="rounded-xl border-2 border-neutral-900 px-6 py-3 font-bold transition hover:bg-neutral-900 hover:text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
           >
             Apply
           </button>
-        </form>
+        </div>
         {couponMessage && (
           <p role="status" className="mt-2 text-sm font-semibold text-brand-dark">
             {couponMessage}
