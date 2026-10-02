@@ -67,11 +67,38 @@ Keep `http://localhost:3000/api/auth/callback/google` registered too — that on
 bug — LAN-IP login cannot be fixed from the app or the console. If you need a LAN test, use
 `adb reverse tcp:3000 tcp:3000` and browse `http://localhost:3000` on the phone.
 
-## 4. Nothing to configure in `.env`
+## 4. Set `AUTH_URL` to the tunnel origin — this one is required
 
-`NEXTAUTH_URL` stays **unset**. `lib/auth.config.js` sets `trustHost: true`, so Auth.js derives the
-callback host from the incoming request — localhost, the tunnel host, and the production domain all
-work without edits. Pinning `NEXTAUTH_URL` to one host breaks the other two.
+`AUTH_URL` must name the origin you are actually serving. It is not optional behind a tunnel.
+
+Next.js builds the absolute request URL from its own bind address, **not** from the `Host` header.
+Measured through the tunnel with `host`/`x-forwarded-host` correctly set to the tunnel host:
+
+```
+request.url = https://localhost:3000/api/auth/callback/google   ← bind address, not the tunnel
+```
+
+Auth.js derives the OAuth `redirect_uri` and the post-login redirect from that URL, so with
+`AUTH_URL` unset the browser was bounced to `https://localhost:3000/login?error=Configuration` and
+Google answered `redirect_uri_mismatch`. With `AUTH_URL` set to the tunnel origin (verified end to
+end through the tunnel):
+
+```
+redirect_uri = https://<tunnel-host>/api/auth/callback/google   ← Google accepts it
+```
+
+Add to `sideeye/.env` and **restart the server** (env is read at boot):
+
+```
+AUTH_URL="https://<tunnel-host>"
+```
+
+- Update it whenever the free ngrok URL changes. A **static ngrok domain** (§2) makes this a one-time edit.
+- No trailing slash, no path — a path component changes Auth.js's `basePath`.
+- `NEXTAUTH_URL` is still honoured as a fallback name; `AUTH_URL` wins when both are set.
+- Back to plain local dev? Set `AUTH_URL="http://localhost:3000"` or delete the line. A stale tunnel
+  value sends Google to a host that no longer exists and drops the session cookie on the wrong origin.
+
 
 ## 5. Test from your phone
 

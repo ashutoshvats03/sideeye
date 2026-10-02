@@ -56,7 +56,9 @@ Status legend: `[ ]` todo · `[x]` done · `[!]` known gap, blocks production.
 - `[ ]` `git ls-files | findstr /i env` — only `.env.example` is tracked; no `.env`, no `ngrok.yml`,
       no authtoken anywhere in history.
 - `[ ]` `git log -p | findstr /i "client_secret\|AUTH_SECRET\|postgres://"` — no real values in history.
-- `[ ]` `NEXTAUTH_URL` unset in every environment (host-generality relies on `trustHost: true`).
+- `[ ]` `AUTH_URL` set to the exact origin being served in each environment — and **not** left
+      pointing at a dead tunnel host. Never leave `NEXTAUTH_URL` set to a different host than
+      `AUTH_URL`'s intent; a mismatch is what produces `redirect_uri_mismatch`.
 - `[ ]` `AUTH_SECRET` / `NEXTAUTH_SECRET` set in the deploy platform only.
 
 ### Auth and access control
@@ -106,3 +108,8 @@ Status legend: `[ ]` todo · `[x]` done · `[!]` known gap, blocks production.
 - `[ ]` `allowedDevOrigins` in `next.config.js` is dev-only and irrelevant in the build.
 - `[ ]` Real brand imagery copied into `public/brand/` with explicit `width`/`height` on `next/image`.
 - `[ ]` HTTPS enforced; `trustHost: true` is safe behind a proxy that sets host correctly.
+- `[ ]` `AUTH_URL` set on the deploy platform to `https://<your-domain>` (no path, no trailing
+      slash). Without it Auth.js advertises the server's bind address as the OAuth callback origin
+      and Google fails the login with `redirect_uri_mismatch` — this is exactly what went wrong on
+      the ngrok tunnel (see [`NGROK-TESTING.md`](./NGROK-TESTING.md) §4).
+

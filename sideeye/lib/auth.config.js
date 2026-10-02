@@ -17,6 +17,16 @@ export const authConfig = {
   // what .env.example has always carried.
   secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
 
+  // Accept the incoming Host without demanding an explicit base URL. This is what lets a
+  // single config run on localhost, an ngrok tunnel, or a production domain.
+  //
+  // It does NOT tell Auth.js which public origin to advertise. Next.js builds the absolute
+  // request URL from its own bind address — measured behind a tunnel: every request
+  // reported `https://localhost:3000/...` even though `host` and `x-forwarded-host`
+  // carried the tunnel host — and Auth.js derives the OAuth `redirect_uri` and the
+  // post-login redirect from that URL. So `AUTH_URL` must name the origin you are actually
+  // serving (see .env.example). Set it wrong and Google answers `redirect_uri_mismatch`,
+  // or the session cookie lands on a host the browser is not on.
   trustHost: true,
 
   session: { strategy: "jwt" },
