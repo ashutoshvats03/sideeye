@@ -56,6 +56,23 @@ function applyStockCap(qty, options) {
   return Math.min(qty, Math.floor(cap));
 }
 
+/**
+ * True when the caller reports no sellable stock.
+ *
+ * `maxQty` models the product's `stockQty`. A finite value below 1 means there is
+ * nothing to hold, so adding must not create a line and an absolute set must drop
+ * the line instead of writing a qty the shelf cannot back. `null`/`undefined` (and
+ * any non-finite value) means "no stock information" and is NOT out of stock —
+ * the cap simply does not apply.
+ *
+ * @param {{maxQty?: number|null}} [options]
+ * @returns {boolean}
+ */
+function isOutOfStock(options) {
+  const cap = options?.maxQty;
+  return typeof cap === "number" && Number.isFinite(cap) && cap < 1;
+}
+
 /** True when a value is shaped like a usable cart line. */
 function isValidLine(line) {
   return (
@@ -129,6 +146,9 @@ export function serializeCart(cart) {
  */
 export function addToCart(cart, slug, qty = 1, options) {
   const lines = Array.isArray(cart) ? cart : [];
+  // Nothing on the shelf: do not create a line and do not grow an existing one.
+  // The sold-out UI already hides the button; this is the programmatic backstop.
+  if (isOutOfStock(options)) return lines;
   const added = normaliseQty(qty);
   const existing = lines.find((line) => line?.slug === slug);
 
@@ -152,6 +172,11 @@ export function addToCart(cart, slug, qty = 1, options) {
  */
 export function setQty(cart, slug, qty, options) {
   const lines = Array.isArray(cart) ? cart : [];
+  // An absolute set against zero stock drops the line: a qty the shelf cannot back
+  // must not persist. Unknown slugs stay a no-op either way.
+  if (isOutOfStock(options)) {
+    return lines.filter((line) => line?.slug !== slug);
+  }
   const next = normaliseQty(qty);
   return lines.map((line) =>
     line?.slug === slug

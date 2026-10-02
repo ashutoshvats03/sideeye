@@ -93,6 +93,17 @@ test("addItem caps the line at available stock", () => {
   ]);
 });
 
+test("addItem with zero stock stores nothing", () => {
+  expect(addItem("ruby-ember-ring", 2, { maxQty: 0 })).toEqual([]);
+  expect(readCart()).toEqual([]);
+});
+
+test("updateItem with zero stock drops the line", () => {
+  addItem("ruby-ember-ring", 2);
+  expect(updateItem("ruby-ember-ring", 5, { maxQty: 0 })).toEqual([]);
+  expect(readCart()).toEqual([]);
+});
+
 test("updateItem sets an absolute quantity", () => {
   addItem("ruby-ember-ring", 5);
   expect(updateItem("ruby-ember-ring", 2)).toEqual([

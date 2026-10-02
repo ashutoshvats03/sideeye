@@ -162,3 +162,27 @@ test("a non-finite qty from storage is dropped to 1, never NaN", () => {
   // JSON cannot express Infinity, but a giant exponent can still parse to Infinity.
   expect(parseCart('[{"slug":"a","qty":1e400}]')).toEqual([{ slug: "a", qty: 1 }]);
 });
+
+test("addToCart with zero stock creates no line on an empty cart", () => {
+  // maxQty 0 models stockQty 0. There is nothing to hold, so nothing is added.
+  expect(addToCart([], "ring", 1, { maxQty: 0 })).toEqual([]);
+});
+
+test("addToCart with zero stock leaves an existing cart untouched", () => {
+  const cart = [{ slug: "ring", qty: 2 }];
+  expect(addToCart(cart, "ring", 3, { maxQty: 0 })).toEqual(cart);
+  expect(addToCart(cart, "other", 1, { maxQty: 0 })).toEqual(cart);
+});
+
+test("setQty with zero stock removes the line", () => {
+  const cart = [
+    { slug: "a", qty: 2 },
+    { slug: "b", qty: 1 },
+  ];
+  expect(setQty(cart, "a", 5, { maxQty: 0 })).toEqual([{ slug: "b", qty: 1 }]);
+});
+
+test("setQty with zero stock on an unknown slug is a no-op", () => {
+  const cart = [{ slug: "a", qty: 1 }];
+  expect(setQty(cart, "zzz", 4, { maxQty: 0 })).toEqual(cart);
+});
