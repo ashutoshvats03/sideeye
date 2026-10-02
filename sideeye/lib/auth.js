@@ -17,6 +17,7 @@ import { syncUserFromOAuth, isAdminRole } from "./users.js";
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
 
+  callbacks: {
   /**
    * Returning `false` aborts the sign-in, which is how a deactivated user is denied.
    */
@@ -29,7 +30,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       image: user.image ?? profile?.picture,
     });
 
-    if (!result.ok) return false;
+    if (!result.ok) {
+      return false;
+    }
 
     // Surface the DB values (not Google's claims) to the JWT. Guards still re-read
     // Postgres; this only lets the UI render the right navbar state.
@@ -54,5 +57,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.isAdmin = isAdminRole(token.role);
     }
     return session;
+  },
   },
 });
