@@ -26,15 +26,39 @@ const { auth } = NextAuth(authConfig);
 export default auth((request) => {
   const { pathname, search } = request.nextUrl;
 
-  if (!requiresAuth(pathname)) return NextResponse.next();
+  // Expose the current path to server components (SiteHeader builds a
+  // callbackUrl-preserving Log in link from it). Server-set, but consumers
+  // still sanitize before using it as a redirect target.
+  const headers = new Headers(request.headers);
+  headers.set("x-pathname", `${pathname}${search}`);
 
-  if (request.auth?.user) return NextResponse.next();
+  if (!requiresAuth(pathname)) return NextResponse.next({ request: { headers } });
+
+  if (request.auth?.user) return NextResponse.next({ request: { headers } });
 
   return NextResponse.redirect(new URL(loginUrlFor(pathname, search), request.nextUrl));
 });
 
 export const config = {
-  // Must cover at least PROTECTED_PREFIXES in lib/protected.js. `/api/auth` is untouched
-  // so the auth endpoints are never redirected into a loop.
-  matcher: ["/checkout/:path*", "/account/:path*", "/admin/:path*"],
+  // The x-pathname header feeds SiteHeader's callbackUrl-preserving Log in link,
+  // which renders on PUBLIC pages — so the matcher must cover every page route,
+  // not just the protected ones. API routes and static assets are untouched.
+  // ADD NEW PAGES HERE when adding a route, or the Log in link on that page
+  // falls back to callbackUrl=/ (home) instead of returning the shopper here.
+  matcher: [
+    "/",
+    "/shop/:path*",
+    "/cart",
+    "/product/:path*",
+    "/track",
+    "/login",
+    "/about",
+    "/faq",
+    "/contact",
+    "/policies/:path*",
+    "/order-success",
+    "/checkout/:path*",
+    "/account/:path*",
+    "/admin/:path*",
+  ],
 };

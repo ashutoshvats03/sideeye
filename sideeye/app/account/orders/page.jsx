@@ -6,7 +6,7 @@ import { cancelOrder } from "../../../actions/checkout.js";
 export const dynamic = "force-dynamic";
 
 export default async function AccountOrdersPage() {
-  const user = await requireUser();
+  const user = await requireUser("/account/orders");
 
   const orders = await prisma.order.findMany({
     where: { userId: user.id },

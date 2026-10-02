@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { getCurrentUser } from "../lib/guards.js";
+import { sanitizeCallbackUrl } from "../lib/protected.js";
 import { isAdminRole } from "../lib/roles.js";
 import { signOutAction } from "../app/actions.js";
 import CartBadge from "./CartBadge.jsx";
@@ -15,6 +17,22 @@ import CartBadge from "./CartBadge.jsx";
  */
 export default async function SiteHeader() {
   const user = await getCurrentUser();
+
+  // Where the visitor is right now (set by proxy.js). The Log in link carries
+  // it as callbackUrl so a sign-in started from the navbar returns here —
+  // e.g. mid-checkout — instead of dumping the shopper on the home page.
+  // Re-sanitized: the login page and signInAction sanitize again downstream.
+  const heads = await headers();
+  const raw = heads.get("x-pathname");
+  // Never point back at /login itself (self-loop after sign-in).
+  // And don't render the link at all ON /login: clicking it would clobber a
+  // callbackUrl the shopper arrived with (e.g. %2Fcheckout from a bounce).
+  const isLoginPage = (raw ?? "").split("?")[0] === "/login";
+  const here =
+    raw && raw.split("?")[0] === "/login"
+      ? "/"
+      : sanitizeCallbackUrl(raw, "/");
+  const loginHref = `/login?callbackUrl=${encodeURIComponent(here)}`;
 
   return (
     <header className="border-b border-neutral-200 bg-white">
@@ -68,9 +86,9 @@ export default async function SiteHeader() {
                 </button>
               </form>
             </>
-          ) : (
+          ) : isLoginPage ? null : (
             <Link
-              href="/login"
+              href={loginHref}
               className="rounded-lg bg-brand-red px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-red-dark focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
             >
               Log in

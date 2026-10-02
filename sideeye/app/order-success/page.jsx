@@ -6,10 +6,16 @@ import { formatPaise } from "../../lib/money.js";
 export const dynamic = "force-dynamic";
 
 export default async function OrderSuccessPage({ searchParams }) {
-  const user = await requireUser();
   // Next 15+: searchParams is a Promise — must be awaited, not read directly.
+  // Awaited BEFORE requireUser so a bounce can carry the shopper back to this
+  // exact order (bare requireUser() would fall back to callbackUrl=/, home).
   const sp = await searchParams;
   const orderNumber = sp?.order;
+  const user = await requireUser(
+    typeof orderNumber === "string" && orderNumber !== ""
+      ? `/order-success?order=${orderNumber}`
+      : "/account/orders",
+  );
 
   if (!orderNumber) {
     redirect("/account/orders");
