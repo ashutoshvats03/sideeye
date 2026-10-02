@@ -1,0 +1,257 @@
+// SideEye v1 schema — mirrors spec §7 (docs/2026-10-02-sideeye-design.md).
+//
+// Money rule: every monetary field is an Int holding PAISE (1 rupee = 100 paise).
+// Never a Float/Decimal — see AGENTS.md and spec §2.
+//
+// Status/payment enums are plain Strings here on purpose. Plan 04 introduces the
+// app-level state-machine constants (`pending -> confirmed -> packed -> shipped ->
+// delivered`, plus `cancelled`/`refunded`) so transitions can be guarded in one place.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+  runtime  = "bun"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// User + Address
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  phone         String?
+  passwordHash  String?
+  role          String    @default("customer") // customer | admin
+  avatar        String?
+  emailVerified DateTime?
+  lastLoginAt   DateTime?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  addresses    Address[]
+  orders       Order[]
+  userCoupons  UserCoupon[]
+  reviews      Review[]
+
+  @@index([role])
+  @@index([isActive])
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  label     String? // "Home", "Work"
+  name      String
+  phone     String
+  line1     String
+  line2     String?
+  city      String
+  state     String
+  pincode   String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Catalogue
+// ---------------------------------------------------------------------------
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  image     String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  care        String?
+  materials   String?
+  pricePaise  Int // selling price, paise
+  mrpPaise    Int? // struck-through MRP, paise
+  stockQty    Int      @default(0)
+  images      String[] @default([])
+  categoryId  String
+  // Multi-tag badges + shop filter chips. Allowed values (spec §7, enforced at the
+  // app layer in Plan 03): "Eye Special", "Funky", "Queen", "Slay", "Baddie".
+  vibes       String[] @default([])
+  tags        String[] @default([])
+  isActive    Boolean  @default(true)
+  ratingAvg   Float    @default(0) // display-only aggregate, not money
+  ratingCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category      Category           @relation(fields: [categoryId], references: [id])
+  orderItems    OrderItem[]
+  reviews       Review[]
+  reservations  StockReservation[]
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([slug])
+}
+
+// ---------------------------------------------------------------------------
+// Coupons
+// ---------------------------------------------------------------------------
+
+model Coupon {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  type            String // PERCENT | FLAT
+  // For PERCENT this is whole percentage points (20 = 20%); for FLAT it is paise.
+  value           Int
+  minOrderPaise   Int       @default(0)
+  maxDiscountPaise Int? // caps PERCENT; null = uncapped
+  usageLimit      Int?
+  perUserLimit    Int?
+  usedCount       Int       @default(0)
+  startsAt        DateTime  @default(now())
+  expiresAt       DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  userCoupons UserCoupon[]
+  orders      Order[]
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model UserCoupon {
+  id        String   @id @default(cuid())
+  userId    String
+  couponId  String
+  useCount  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, couponId])
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Orders
+// ---------------------------------------------------------------------------
+
+model Order {
+  id     String @id @default(cuid())
+  number String @unique // human-facing, e.g. "SE-1A2B3C"
+  // Spec §7: userFK is NOT NULL — v1 has no guest checkout (auth is mandatory).
+  userId String
+
+  // pending | confirmed | packed | shipped | delivered | cancelled | refunded
+  status String @default("pending")
+  // COD | RAZORPAY (Razorpay deferred per spec §11; v1 ships COD only)
+  paymentMethod String  @default("COD")
+  // pending | paid | failed | refunded
+  paymentStatus String  @default("pending")
+
+  subtotalPaise  Int
+  discountPaise  Int @default(0)
+  shippingPaise  Int @default(0)
+  totalPaise     Int
+  couponId       String?
+
+  // Frozen copy of the delivery address at purchase time, so later address edits
+  // never rewrite history. Shape validated by zod in Plan 04.
+  addressSnapshot Json
+  // [{ status, at, note }] appended as the order advances.
+  timeline        Json    @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User        @relation(fields: [userId], references: [id])
+  coupon Coupon?     @relation(fields: [couponId], references: [id])
+  items  OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  // productId is intentionally NOT a hard FK requirement for rendering history,
+  // but the relation is kept so admin can join to the live product.
+  productId String?
+
+  // Snapshots: prices and names change in the catalogue, order history must not.
+  nameSnapshot    String
+  pricePaise      Int
+  mrpPaise        Int?
+  qty             Int
+  imageSnapshot   String?
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// ---------------------------------------------------------------------------
+// Reviews
+// ---------------------------------------------------------------------------
+
+model Review {
+  id         String   @id @default(cuid())
+  productId  String
+  userId     String
+  rating     Int // 1..5, validated by zod
+  text       String?
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // One review per user per product.
+  @@unique([productId, userId])
+  @@index([productId, isApproved])
+}
+
+// ---------------------------------------------------------------------------
+// Stock reservations (checkout hold, Plan 04)
+// ---------------------------------------------------------------------------
+
+model StockReservation {
+  id        String   @id @default(cuid())
+  productId String
+  qty       Int
+  // Rows past expiresAt are released by a sweep; stockQty is never left negative.
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([expiresAt])
+}

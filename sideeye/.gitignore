@@ -1,0 +1,7 @@
+# Generated Prisma Client (Prisma 7 requires an explicit generator output path).
+# Regenerate with: bunx prisma generate
+lib/generated/
+
+# Local env (DATABASE_URL etc). Never commit real secrets.
+.env
+.env*.local
