@@ -6,8 +6,10 @@ export const dynamic = "force-dynamic";
 const STATUS_STEPS = ["pending", "confirmed", "packed", "shipped", "delivered"];
 
 export default async function TrackPage({ searchParams }) {
-  const orderNumber = searchParams?.order?.trim();
-  const phone = searchParams?.phone?.trim();
+  // Next 15+: searchParams is a Promise — must be awaited, not read directly.
+  const sp = await searchParams;
+  const orderNumber = sp?.order?.trim();
+  const phone = sp?.phone?.trim();
 
   let order = null;
   let error = null;

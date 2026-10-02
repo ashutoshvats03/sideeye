@@ -7,7 +7,9 @@ export const dynamic = "force-dynamic";
 
 export default async function OrderSuccessPage({ searchParams }) {
   const user = await requireUser();
-  const orderNumber = searchParams?.order;
+  // Next 15+: searchParams is a Promise — must be awaited, not read directly.
+  const sp = await searchParams;
+  const orderNumber = sp?.order;
 
   if (!orderNumber) {
     redirect("/account/orders");
