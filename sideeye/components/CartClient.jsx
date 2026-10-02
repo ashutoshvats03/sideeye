@@ -18,52 +18,58 @@ import { readCart, updateItem, removeItem } from "../lib/cart-storage.js";
 export default function CartClient() {
   const [lines, setLines] = useState(null); // null = still loading
   const [totals, setTotals] = useState(null);
+  const [loadError, setLoadError] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponMsg, setCouponMsg] = useState(null); // { ok: boolean, text: string }
   const [couponTotals, setCouponTotals] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const refresh = useCallback(async (cart) => {
-    try {
-      const res = await fetch("/api/cart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: cart }),
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      setLines(data.lines);
-      setTotals(data.totals);
-    } catch {
-      // Network blip: keep whatever is on screen rather than blanking the cart.
-    }
+  const fetchCart = useCallback(async (cart = readCart()) => {
+    const res = await fetch("/api/cart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: cart }),
+    });
+    if (!res.ok) throw new Error(`cart fetch failed with ${res.status}`);
+    return res.json();
   }, []);
 
-  // The initial load is inlined rather than going through `refresh` so the `await` is
-  // visible here — the setState genuinely happens after the fetch resolves, not
-  // synchronously in the effect body.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+  const refresh = useCallback(
+    async (cart) => {
       try {
-        const res = await fetch("/api/cart", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items: readCart() }),
-        });
-        if (!res.ok || cancelled) return;
-        const data = await res.json();
-        if (cancelled) return;
+        const data = await fetchCart(cart);
         setLines(data.lines);
         setTotals(data.totals);
       } catch {
-        // Network blip: keep whatever is on screen rather than blanking the cart.
+        // Post-edit refresh: keep whatever is on screen rather than blanking the cart.
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    },
+    [fetchCart],
+  );
+
+  // The initial load sets state only in the promise continuations, never
+  // synchronously in the effect body — and a failed fetch lands on the error
+  // state below instead of spinning forever.
+  useEffect(() => {
+    fetchCart().then(
+      (data) => {
+        setLines(data.lines);
+        setTotals(data.totals);
+      },
+      () => setLoadError(true),
+    );
+  }, [fetchCart]);
+
+  async function retryLoad() {
+    setLoadError(false);
+    try {
+      const data = await fetchCart();
+      setLines(data.lines);
+      setTotals(data.totals);
+    } catch {
+      setLoadError(true);
+    }
+  }
 
   // A coupon is only valid against a specific cart. Any edit invalidates it, so the
   // displayed discount is dropped rather than left applied to a cart it was not checked
@@ -108,6 +114,24 @@ export default function CartClient() {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (lines === null && loadError) {
+    return (
+      <div className="mx-auto max-w-md py-16 text-center">
+        <h2 className="font-display text-2xl font-bold">Could not load your bag</h2>
+        <p className="mt-2 text-neutral-600">
+          Check your connection and try again — nothing in your bag was lost.
+        </p>
+        <button
+          type="button"
+          onClick={retryLoad}
+          className="mt-6 rounded-2xl bg-brand px-6 py-3 font-bold text-white transition hover:bg-brand-dark focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+        >
+          Try again
+        </button>
+      </div>
+    );
   }
 
   if (lines === null) {

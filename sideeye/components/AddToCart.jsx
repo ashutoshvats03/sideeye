@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { MAX_QTY_PER_LINE } from "../lib/cart.js";
 import { addItem } from "../lib/cart-storage.js";
 
 /**
- * Quantity stepper + Add to bag + Buy it now.
+ * Quantity stepper + Add to bag.
  *
  * The cart is browser-local and only `{ slug, qty }` is ever persisted — price, stock and
  * name are re-read from the database server-side at checkout, so a stale or hand-edited
@@ -15,9 +14,11 @@ import { addItem } from "../lib/cart-storage.js";
  * Qty is capped by BOTH `MAX_QTY_PER_LINE` (a sanity bound) and the product's real
  * `stockQty`, and the whole control is replaced when sold out, so the shopper is never
  * invited to buy something that does not exist.
+ *
+ * After adding, the shopper continues via the bag in the navbar — there is no direct
+ * buy-now shortcut by design.
  */
 export default function AddToCart({ product }) {
-  const router = useRouter();
   const soldOut = product.stockQty <= 0;
   const maxQty = Math.max(1, Math.min(MAX_QTY_PER_LINE, product.stockQty));
 
@@ -36,11 +37,6 @@ export default function AddToCart({ product }) {
   function addToBag() {
     addItem(product.slug, qty, { maxQty: product.stockQty });
     setMessage(qty === 1 ? "Added to your bag." : `Added ${qty} to your bag.`);
-  }
-
-  function buyNow() {
-    addItem(product.slug, qty, { maxQty: product.stockQty });
-    router.push("/checkout");
   }
 
   if (soldOut) {
@@ -89,22 +85,13 @@ export default function AddToCart({ product }) {
         </p>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <button
-          type="button"
-          onClick={addToBag}
-          className="flex-1 rounded-2xl bg-brand px-6 py-4 font-bold text-white transition hover:bg-brand-dark focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
-        >
-          Add to bag
-        </button>
-        <button
-          type="button"
-          onClick={buyNow}
-          className="flex-1 rounded-2xl border-2 border-neutral-900 px-6 py-4 font-bold text-neutral-900 transition hover:bg-neutral-900 hover:text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
-        >
-          Buy it now
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={addToBag}
+        className="flex-1 rounded-2xl bg-brand px-6 py-4 font-bold text-white transition hover:bg-brand-dark focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+      >
+        Add to bag
+      </button>
 
       {message ? (
         <p
