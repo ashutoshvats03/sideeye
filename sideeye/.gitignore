@@ -5,3 +5,6 @@ lib/generated/
 # Local env (DATABASE_URL etc). Never commit real secrets.
 .env
 .env*.local
+
+# Local dev/prod server output, not source.
+dev.log

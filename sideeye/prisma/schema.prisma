@@ -11,6 +11,15 @@ generator client {
   provider = "prisma-client"
   output   = "../lib/generated/prisma"
   runtime  = "bun"
+
+  // Prisma 7 always emits TypeScript (`generatedFileExtension` only accepts ts/mts/cts),
+  // so this project imports the client with BARE specifiers — see lib/prisma.js.
+  //
+  // The generated files import each other using ESM-style `.js` specifiers, which do not
+  // exist on disk. Bun resolves those, but Turbopack does not, so `next build` failed with
+  // "Can't resolve './internal/class.js'". Pointing the generated imports at the real
+  // `.ts` files fixes the bundler while staying valid for Bun.
+  importFileExtension = "ts"
 }
 
 datasource db {

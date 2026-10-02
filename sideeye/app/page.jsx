@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white text-neutral-900">
+    <div className="bg-white text-neutral-900">
       <section className="bg-brand px-4 py-10 text-center text-white">
         {/* Source logo is 1254x1254 RGB with an opaque red background (no alpha),
             so it renders as a deliberate rounded brand tile rather than a transparent mark. */}
@@ -59,6 +59,6 @@ export default function Home() {
           className="aspect-square w-full rounded-md border border-neutral-200 object-cover"
         />
       </section>
-    </main>
+    </div>
   );
 }

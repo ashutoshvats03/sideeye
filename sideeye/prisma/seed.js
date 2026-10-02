@@ -9,7 +9,9 @@
 // when run via `bunx prisma db seed` (Node) as well as `bun prisma/seed.js`.
 
 import "dotenv/config";
-import { PrismaClient } from "../lib/generated/prisma/client.js";
+// Bare specifier: the Prisma 7 generator emits TypeScript only, so there is no client.js
+// on disk (see prisma/schema.prisma).
+import { PrismaClient } from "../lib/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
