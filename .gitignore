@@ -1,0 +1,8 @@
+node_modules/
+.next/
+out/
+.env
+.env*.local
+*.db
+.superpowers/
+bun-install.ps1
