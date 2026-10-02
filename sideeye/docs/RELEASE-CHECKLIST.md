@@ -113,3 +113,82 @@ Status legend: `[ ]` todo · `[x]` done · `[!]` known gap, blocks production.
       and Google fails the login with `redirect_uri_mismatch` — this is exactly what went wrong on
       the ngrok tunnel (see [`NGROK-TESTING.md`](./NGROK-TESTING.md) §4).
 
+## 5. Production release suggestions (owner's list)
+
+Logged during the tunnel testing pass so nothing has to be re-investigated at release time.
+Items 5.1 and 5.2 were fixed in this pass; 5.3–5.5 are parked feature work, not started.
+
+### 5.1 `[x]` Clear the bag after a successful order
+
+`clearCart()` was only ever called from the CartClient "Clear bag" button, so after placing an
+order the bag still held the lines that had just been ordered (badge count included).
+Fixed with `components/ClearCartAfterOrder.jsx` — a client island rendered by the success page
+only. The cart's source of truth is localStorage, so only the browser can clear it; resetting
+the cookie server-side would leave the badge showing the ordered items.
+
+Phone check: place an order, then open `/cart` — it must be empty and the badge 0.
+
+### 5.2 `[x]` Mobile: whole app wider than the screen
+
+Measured at a 360px viewport (345px content width after the scrollbar) on the live tunnel:
+- signed-out pages (`/`, `/shop`, `/cart`, `/faq`, `/about`, `/contact`, `/track`, `/login`):
+  zero overflow, `scrollWidth == viewport` on every one;
+- signed-in header: the nav row measured 279px inside a 345px row, so the document scrolled to
+  399px — 54px of sideways scroll on **every** page while signed in. Cause: the single
+  non-wrapping flex row in `components/site-header.jsx` (Shop + Bag + Account `max-w-[10rem]` +
+  Log out) is wider than a phone.
+
+Fixed by shrinking the header on small screens only: nav padding `px-2 sm:px-3`, the Account
+name capped at `max-w-[6rem]` below `sm` (`sm:max-w-[10rem]`) with `min-w-0` so `truncate` works
+inside the flex row, and the `SideEye` wordmark hidden below `sm` (the logo mark stays). Re-measured
+on the production build after the fix: signed-in `scrollWidth 345 == viewport 345`, zero
+offending elements — was 399px.
+
+Phone check: no sideways scroll on any page while signed in and signed out; the header still
+reads well at 360px and 390px.
+
+### 5.3 `[ ]` Saved addresses per user (new `Address` model)
+
+Each user can save as many addresses as they like; checkout offers them as suggestions.
+
+Shape to build (needs a migration — DB change, so owner approval before applying):
+`Address { id, userId FK (cascade), label ("Home", "College", …), fullName, phone, line1,
+line2?, landmark?, city, district?, state, pincode, isDefault, createdAt, updatedAt }`, with at
+most one `isDefault` per user. `Order.addressSnapshot` already exists, so a placed order keeps
+its own copy and later edits to an address can never rewrite order history.
+
+Open decisions: does checkout *replace* the form fields when a saved address is picked, or show a
+compact "deliver to" picker with a "change" link; should a used address auto-save, or is there an
+explicit "save this address" checkbox.
+
+### 5.4 `[ ]` Pincode → state / district autofill
+
+Typing a 6-digit pincode fills city, district and state instead of making the shopper type them.
+
+Open decision — where the pincode data comes from:
+- **bundled dataset in the repo** (recommended): a JSON of ~6-digit PIN code → city/district/state,
+  committed alongside the app. No network call, no API key, works offline, but it is only as
+  fresh as the last refresh and adds repo weight;
+- **third-party API** (postalpincode.in, Data.gov.in): always current, but checkout then depends
+  on a remote service — latency, rate limits, an API key to protect, and a hard failure mode if
+  it is down at order time.
+
+Open decision — autocomplete UI: a dropdown of matching areas while typing vs filling on blur
+after 6 digits. Pincode validation stays server-side; the lookup is a convenience, never the
+source of truth for what gets stored.
+
+### 5.5 `[ ]` "Use my current location" on the address form
+
+Browser Geolocation (`navigator.geolocation.getCurrentPosition`) fills the form for a shopper who
+does not want to type their address.
+
+Requires: HTTPS (already satisfied on the tunnel and on any real domain) and an explicit
+permission prompt, so it must be a button the shopper taps — never an automatic request on page
+load. Coordinates are transient: resolve them to a pincode/city with a geocoder (OpenStreetMap
+Nominatim, or Google Places) and store only the resulting address fields.
+
+Open decisions: which geocoder (Nominatim's free tier requires a real User-Agent and is rate
+limited; Google Places needs a key and bills per request); whether the resolved address is
+offered as a suggestion to review rather than filled in silently; how much accuracy to demand
+before auto-filling (a city-level match is not enough for delivery).
+
