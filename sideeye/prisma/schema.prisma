@@ -186,6 +186,10 @@ model Order {
   totalPaise     Int
   couponId       String?
 
+  // Client-generated UUID for double-submit protection. Unique so a retried request
+  // returns the original order instead of creating a second one.
+  idempotencyKey String? @unique
+
   // Frozen copy of the delivery address at purchase time, so later address edits
   // never rewrite history. Shape validated by zod in Plan 04.
   addressSnapshot Json
