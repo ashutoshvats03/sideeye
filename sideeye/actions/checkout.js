@@ -47,7 +47,7 @@ const placeOrderSchema = z.object({
     .max(50),
   addressId: z.string().trim().optional(),
   address: addressSchema.optional(),
-  couponCode: z.string().trim().max(50).optional().default(""),
+  couponCode: z.preprocess((v) => v ?? "", z.string().trim().max(50)),
   idempotencyKey: z
     .string()
     .trim()

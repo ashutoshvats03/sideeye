@@ -50,7 +50,7 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
     const result = await placeOrder({
       items: lines.map((l) => ({ slug: l.slug, qty: l.qty })),
       address,
-      couponCode: couponCode || null,
+      couponCode: couponCode.trim(),
       idempotencyKey,
     });
     setBusy(false);
