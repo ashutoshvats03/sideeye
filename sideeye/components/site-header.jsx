@@ -46,7 +46,10 @@ export default async function SiteHeader() {
             preload
             className="h-10 w-10 rounded-xl object-cover"
           />
-          <span className="font-display text-xl font-extrabold tracking-tight text-neutral-900">
+          {/* The wordmark is the first thing to go below `sm`: it is the widest item in the
+              header row, and on a 360px phone the signed-in nav (Shop + Bag + Account + Log
+              out) needs that width or the whole page scrolls sideways. The logo mark stays. */}
+          <span className="hidden font-display text-xl font-extrabold tracking-tight text-neutral-900 sm:inline">
             SideEye
           </span>
         </Link>
@@ -54,7 +57,7 @@ export default async function SiteHeader() {
         <nav aria-label="Primary" className="flex items-center gap-1 sm:gap-3">
           <Link
             href="/shop"
-            className="rounded-lg px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+            className="rounded-lg px-2 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 sm:px-3"
           >
             Shop
           </Link>
@@ -73,14 +76,14 @@ export default async function SiteHeader() {
               ) : null}
               <Link
                 href="/account"
-                className="max-w-[10rem] truncate rounded-lg px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+                className="min-w-0 max-w-[6rem] truncate rounded-lg px-2 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 sm:max-w-[10rem] sm:px-3"
               >
                 {user.name || "Account"}
               </Link>
               <form action={signOutAction}>
                 <button
                   type="submit"
-                  className="rounded-lg border-2 border-neutral-900 px-3 py-2 text-sm font-bold text-neutral-900 transition hover:bg-neutral-900 hover:text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+                  className="rounded-lg border-2 border-neutral-900 px-2 py-2 text-sm font-bold text-neutral-900 transition hover:bg-neutral-900 hover:text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red sm:px-3"
                 >
                   Log out
                 </button>
@@ -89,7 +92,7 @@ export default async function SiteHeader() {
           ) : isLoginPage ? null : (
             <Link
               href={loginHref}
-              className="rounded-lg bg-brand-red px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-red-dark focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+              className="rounded-lg bg-brand-red px-3 py-2 text-sm font-bold text-white transition hover:bg-brand-red-dark focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red sm:px-4"
             >
               Log in
             </Link>

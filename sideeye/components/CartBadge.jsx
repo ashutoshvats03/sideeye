@@ -34,7 +34,7 @@ export default function CartBadge() {
   return (
     <Link
       href="/cart"
-      className="relative rounded-lg px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+      className="relative rounded-lg px-2 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red sm:px-3"
     >
       Bag
       {count ? (

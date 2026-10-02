@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "../../lib/guards.js";
 import { prisma } from "../../lib/prisma.js";
 import { formatPaise } from "../../lib/money.js";
+import ClearCartAfterOrder from "../../components/ClearCartAfterOrder.jsx";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,8 @@ export default async function OrderSuccessPage({ searchParams }) {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 text-center">
+      {/* The order is placed; the bag it came from must not still be full. */}
+      <ClearCartAfterOrder />
       <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
         <svg className="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
