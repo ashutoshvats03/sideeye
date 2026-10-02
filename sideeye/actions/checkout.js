@@ -1,3 +1,5 @@
+"use server";
+
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { getCurrentUser } from "../lib/guards.js";
