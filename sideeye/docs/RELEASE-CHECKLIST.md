@@ -147,19 +147,27 @@ offending elements — was 399px.
 Phone check: no sideways scroll on any page while signed in and signed out; the header still
 reads well at 360px and 390px.
 
-### 5.3 `[ ]` Saved addresses per user (new `Address` model)
+### 5.3 `[ ]` Saved addresses per user
 
 Each user can save as many addresses as they like; checkout offers them as suggestions.
 
-Shape to build (needs a migration — DB change, so owner approval before applying):
-`Address { id, userId FK (cascade), label ("Home", "College", …), fullName, phone, line1,
-line2?, landmark?, city, district?, state, pincode, isDefault, createdAt, updatedAt }`, with at
-most one `isDefault` per user. `Order.addressSnapshot` already exists, so a placed order keeps
-its own copy and later edits to an address can never rewrite order history.
+**No migration is needed.** The `Address` model already exists in `prisma/schema.prisma` (created in
+Plan 01, never given UI): `Address { id, userId FK (cascade), label, name, phone, line1, line2?,
+city, state, pincode, isDefault, createdAt, updatedAt }`, indexed on `userId`. `Order.addressSnapshot`
+also already exists, so a placed order keeps its own frozen copy and later edits to an address can
+never rewrite order history.
 
-Open decisions: does checkout *replace* the form fields when a saved address is picked, or show a
-compact "deliver to" picker with a "change" link; should a used address auto-save, or is there an
-explicit "save this address" checkbox.
+Two things the model does *not* have, both relevant to 5.4: no `district` column and no `landmark`.
+Adding either **is** a migration, so owner approval is needed before applying it — and that is the
+only DB change this feature requires.
+
+Where it lands: the address screens (list with a default badge, add / edit / delete, set-default)
+go into **Plan 05 Task 3** together with the account dashboard. The checkout "deliver to" picker
+stays a later step so it ships with 5.4 and 5.5 as one address block.
+
+Decisions still open for the checkout picker: does picking an address *replace* the form fields or
+show a compact picker with a "change" link; does a used address auto-save, or is there an explicit
+"save this address" checkbox.
 
 ### 5.4 `[ ]` Pincode → state / district autofill
 
@@ -191,4 +199,42 @@ Open decisions: which geocoder (Nominatim's free tier requires a real User-Agent
 limited; Google Places needs a key and bills per request); whether the resolved address is
 offered as a suggestion to review rather than filled in silently; how much accuracy to demand
 before auto-filling (a city-level match is not enough for delivery).
+
+### 5.6 `[ ]` Browser storage audit (localStorage) before release
+
+Yes — the app uses `localStorage`, for exactly one thing today: **the cart**. Audit result, so this
+does not need re-discovering at release time:
+
+| Store | Key | Payload | Written by |
+| --- | --- | --- | --- |
+| `localStorage` | `sideeye.cart.v1` | `[{ slug, qty }]` | `lib/cart-storage.js` |
+| cookie (mirror, not `HttpOnly`) | `sideeye.cart.v1` | same, URI-encoded | `lib/cart-storage.js` `writeCookieMirror()` |
+
+No prices, names, stock or PII are stored — slugs and quantities only. That is deliberate: the
+server re-reads price and stock from Postgres at checkout (`lib/cart-lines.js` → `computeTotals`),
+so a hand-edited `localStorage` value cannot change what a shopper is charged. This is already
+covered by `lib/cart.test.js` and `lib/cart-storage.test.js`.
+
+Check these on a real phone before pushing:
+
+- [ ] **iPhone Safari / in-app browsers.** Safari's ITP can clear or refuse script-written storage.
+      Add to bag, close the tab, reopen the site: does the bag survive? If it does not, the shopper
+      loses their cart mid-session and we need a server-side fallback before launch.
+- [ ] **Private / incognito and "block all cookies".** `readCart()` already degrades to an empty
+      cart instead of throwing, and checkout falls back to the empty-cart redirect. Confirm the
+      message is understandable rather than a dead end.
+- [ ] **Cart is per-browser, not per-account.** Signing in on a second device shows an empty bag,
+      and the bag does not follow the shopper between devices. Decide whether that is acceptable
+      for v1 (it is the standard behaviour for most fashion sites) or whether the bag should become
+      a DB table keyed by `userId`.
+- [ ] **Bag clears after a successful order** on a real order (the `ClearCartAfterOrder` island —
+      see 5.1). Cannot be verified without logging in and paying COD.
+- [ ] **Cookie has no `Secure` flag.** `writeCookieMirror()` sets `Path=/; Max-Age=604800;
+      SameSite=Lax` only. Harmless over `http://localhost`, but on the production HTTPS domain add
+      `Secure` so the cookie is never sent over plaintext.
+- [ ] **No PII ever lands in storage.** Confirm no future change writes an address, phone or email
+      into `localStorage` — checkout address fields must stay server-side only.
+
+Note: the wishlist in Plan 06 will add a **second** `localStorage` key, so re-run this audit after
+that lands rather than assuming this table is still complete.
 
