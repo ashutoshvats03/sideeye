@@ -164,3 +164,49 @@ test("with no window at all the cart stays empty and never throws", () => {
   expect(readCart()).toEqual([]);
   expect(() => addItem("ruby-ember-ring", 1)).not.toThrow();
 });
+
+// --- cookie mirror: the server's only view of the cart ---
+test("every write mirrors the cart into a cookie the server can read", () => {
+  const writes = [];
+  globalThis.document = {};
+  Object.defineProperty(globalThis.document, "cookie", {
+    configurable: true,
+    get: () => "",
+    set: (v) => writes.push(String(v)),
+  });
+  try {
+    addItem("ruby-ember-ring", 2);
+    expect(writes.length).toBe(1);
+    expect(writes[0].startsWith("sideeye.cart.v1=")).toBe(true);
+    const encoded = writes[0].split(";")[0].split("=").slice(1).join("=");
+    expect(JSON.parse(decodeURIComponent(encoded))).toEqual([
+      { slug: "ruby-ember-ring", qty: 2 },
+    ]);
+  } finally {
+    delete globalThis.document;
+  }
+});
+
+test("clearCart mirrors the empty cart, never a stale one", () => {
+  const writes = [];
+  globalThis.document = {};
+  Object.defineProperty(globalThis.document, "cookie", {
+    configurable: true,
+    get: () => "",
+    set: (v) => writes.push(String(v)),
+  });
+  try {
+    addItem("ruby-ember-ring", 2);
+    clearCart();
+    const last = writes[writes.length - 1].split(";")[0].split("=").slice(1).join("=");
+    expect(JSON.parse(decodeURIComponent(last))).toEqual([]);
+  } finally {
+    delete globalThis.document;
+  }
+});
+
+test("with no document the cookie mirror is skipped and nothing throws", () => {
+  expect(globalThis.document).toBeUndefined();
+  expect(() => addItem("ruby-ember-ring", 1)).not.toThrow();
+  expect(readCart()).toEqual([{ slug: "ruby-ember-ring", qty: 1 }]);
+});

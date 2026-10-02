@@ -136,6 +136,31 @@ export function serializeCart(cart) {
 }
 
 /**
+ * Name of the plain cookie that mirrors the localStorage cart so server
+ * components (checkout) can read it. Same `[{slug, qty}]` payload, URI-encoded
+ * because raw JSON contains `;` which would break cookie parsing. Client-writable
+ * by necessity — trust comes from the server re-reading prices and stock from the
+ * database, never from this value.
+ */
+export const CART_COOKIE_KEY = "sideeye.cart.v1";
+
+/**
+ * Parse the cart cookie back into a trustworthy cart. Total tolerance, same as
+ * `parseCart`: anything unrecognised degrades to "empty".
+ *
+ * @param {string|null|undefined} value raw cookie value (URI-encoded JSON)
+ * @returns {{slug: string, qty: number}[]}
+ */
+export function parseCartCookie(value) {
+  if (typeof value !== "string" || value.length === 0) return [];
+  try {
+    return parseCart(decodeURIComponent(value));
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Add `qty` of `slug`, merging into an existing line rather than duplicating it.
  *
  * @param {{slug: string, qty: number}[]} cart

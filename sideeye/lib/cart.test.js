@@ -4,6 +4,7 @@ import {
   removeFromCart,
   setQty,
   parseCart,
+  parseCartCookie,
   serializeCart,
   cartCount,
   MAX_QTY_PER_LINE,
@@ -185,4 +186,21 @@ test("setQty with zero stock removes the line", () => {
 test("setQty with zero stock on an unknown slug is a no-op", () => {
   const cart = [{ slug: "a", qty: 1 }];
   expect(setQty(cart, "zzz", 4, { maxQty: 0 })).toEqual(cart);
+});
+
+// --- parseCartCookie: the cookie is client-writable, so it gets zero trust ---
+test("parseCartCookie decodes a mirrored cart", () => {
+  const value = encodeURIComponent('[{"slug":"ruby-ember-ring","qty":2}]');
+  expect(parseCartCookie(value)).toEqual([{ slug: "ruby-ember-ring", qty: 2 }]);
+});
+
+test("parseCartCookie degrades junk to an empty cart", () => {
+  for (const junk of [null, undefined, "", "not json", "%", "%ZZ", "%%%", '[{"slug":"../admin","qty":1}]']) {
+    expect(parseCartCookie(junk)).toEqual([]);
+  }
+});
+
+test("parseCartCookie rejects a hostile qty like parseCart does", () => {
+  const value = encodeURIComponent('[{"slug":"a","qty":9999}]');
+  expect(parseCartCookie(value)).toEqual([{ slug: "a", qty: MAX_QTY_PER_LINE }]);
 });

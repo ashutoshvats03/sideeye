@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { requireUser } from "../../lib/guards.js";
-import { readCart } from "../../lib/cart-storage.js";
+import { parseCartCookie, CART_COOKIE_KEY } from "../../lib/cart.js";
 import { buildCartLines } from "../../lib/cart-lines.js";
 import { computeTotals } from "../../lib/pricing.js";
 import { formatPaise } from "../../lib/money.js";
@@ -12,13 +13,23 @@ import CheckoutForm from "./CheckoutForm.jsx";
 export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage() {
-  const user = await requireUser();
-  const cart = readCart();
-  const { lines } = await buildCartLines(cart);
+  const user = await requireUser("/checkout");
+  // The cart lives in the browser (localStorage), which the server cannot see.
+  // cart-storage mirrors it into a plain slugs-and-quantities cookie on every
+  // mutation; that mirror is the server's only view of the cart. Prices and stock
+  // are still re-read from the database below, so a tampered cookie cannot change
+  // what the shopper is charged.
+  const cookieStore = await cookies();
+  const cart = parseCartCookie(cookieStore.get(CART_COOKIE_KEY)?.value);
+  const { lines: cartLines } = await buildCartLines(cart);
 
-  if (lines.length === 0) {
+  if (cartLines.length === 0) {
     redirect("/cart");
   }
+
+  // buildCartLines returns `{ product, qty }` pairs; the summary, the totals and
+  // CheckoutForm all expect flat lines (`slug`, `name`, `pricePaise`, `qty`).
+  const lines = cartLines.map(({ product, qty }) => ({ ...product, qty }));
 
   const totals = computeTotals(
     lines.map((l) => ({ pricePaise: l.pricePaise, qty: l.qty })),

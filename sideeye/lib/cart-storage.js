@@ -10,7 +10,7 @@
  * the shopper is charged.
  */
 
-import { parseCart, serializeCart, addToCart, setQty } from "./cart.js";
+import { parseCart, serializeCart, addToCart, setQty, CART_COOKIE_KEY } from "./cart.js";
 
 /** localStorage key. Namespaced so it cannot collide with anything else on the origin. */
 export const CART_STORAGE_KEY = "sideeye.cart.v1";
@@ -63,6 +63,7 @@ export function writeCart(cart) {
       // Quota exceeded or storage disabled: the cart lives in memory for this page only.
     }
   }
+  writeCookieMirror(normalised);
   notifyCartChanged();
   return normalised;
 }
@@ -70,6 +71,25 @@ export function writeCart(cart) {
 function notifyCartChanged() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(CART_CHANGED_EVENT));
+}
+
+/**
+ * Mirror the cart into a plain cookie so server components (checkout) can read it.
+ * Slugs and quantities only — no prices, no PII — and URI-encoded because raw JSON
+ * contains `;`. Skipped when cookies are unavailable or the cart is too large for a
+ * cookie; checkout then falls back to the empty-cart redirect, never a crash.
+ *
+ * @param {{slug: string, qty: number}[]} cart the normalised cart just stored
+ */
+function writeCookieMirror(cart) {
+  if (typeof document === "undefined") return;
+  try {
+    const value = encodeURIComponent(JSON.stringify(cart));
+    if (value.length > 3500) return;
+    document.cookie = `${CART_COOKIE_KEY}=${value}; Path=/; Max-Age=604800; SameSite=Lax`;
+  } catch {
+    // Cookies disabled: the server simply cannot see the cart.
+  }
 }
 
 /**
