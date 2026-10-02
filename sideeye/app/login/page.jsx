@@ -26,7 +26,7 @@ export default async function LoginPage({ searchParams }) {
           alt="SideEye"
           width={112}
           height={112}
-          priority
+          preload
           className="mx-auto h-28 w-28 object-contain"
         />
 

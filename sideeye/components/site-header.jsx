@@ -24,7 +24,7 @@ export default async function SiteHeader() {
             alt="SideEye"
             width={96}
             height={96}
-            priority
+            preload
             className="h-10 w-10 rounded-xl object-cover"
           />
           <span className="font-display text-xl font-extrabold tracking-tight text-neutral-900">
