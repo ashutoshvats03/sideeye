@@ -37,9 +37,12 @@ export default async function CheckoutPage() {
   );
 
   // "Complete the look" rail: same-category in-stock products not already in the cart.
-  const cartSlugs = new Set(cart.map((c) => c.slug));
+  // The loop runs once per cart line, so two lines sharing a category fetch the
+  // same related set — dedupe by slug or React sees duplicate keys.
+  const seenSlugs = new Set(cart.map((c) => c.slug));
   const suggestions = [];
   for (const line of lines) {
+    if (suggestions.length >= 4) break;
     const product = await getActiveProductBySlug(line.slug);
     if (product?.categoryId) {
       const related = await prisma.product.findMany({
@@ -47,12 +50,17 @@ export default async function CheckoutPage() {
           categoryId: product.categoryId,
           isActive: true,
           stockQty: { gt: 0 },
-          slug: { notIn: [...cartSlugs] },
+          slug: { notIn: [...seenSlugs] },
         },
         select: { slug: true, name: true, pricePaise: true, images: true },
-        take: 4,
+        take: 4 - suggestions.length,
       });
-      suggestions.push(...related);
+      for (const r of related) {
+        if (!seenSlugs.has(r.slug)) {
+          seenSlugs.add(r.slug);
+          suggestions.push(r);
+        }
+      }
     }
   }
 
