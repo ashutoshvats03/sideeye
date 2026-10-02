@@ -34,12 +34,15 @@ const DEMO_USERS = [
   { name: "Esha Demo", email: "demo5@example.invalid", phone: "9876500005", city: "Pune" },
 ];
 
+const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
+const freshExpiry = () => new Date(Date.now() + FIVE_DAYS_MS);
+
 const DEMO_COUPONS = [
-  { code: "TEST10", type: "PERCENT", value: 10, minOrderPaise: 0, maxDiscountPaise: 50000, usageLimit: 1000, perUserLimit: null, isActive: true, expiresAt: null },
-  { code: "FLAT50", type: "FLAT", value: 5000, minOrderPaise: 49900, maxDiscountPaise: null, usageLimit: 500, perUserLimit: null, isActive: true, expiresAt: null },
-  { code: "MIN999", type: "PERCENT", value: 15, minOrderPaise: 99900, maxDiscountPaise: 100000, usageLimit: 200, perUserLimit: 2, isActive: true, expiresAt: null },
+  { code: "TEST10", type: "PERCENT", value: 10, minOrderPaise: 0, maxDiscountPaise: 50000, usageLimit: 1000, perUserLimit: null, isActive: true, expiresAt: freshExpiry() },
+  { code: "FLAT50", type: "FLAT", value: 5000, minOrderPaise: 49900, maxDiscountPaise: null, usageLimit: 500, perUserLimit: null, isActive: true, expiresAt: freshExpiry() },
+  { code: "MIN999", type: "PERCENT", value: 15, minOrderPaise: 99900, maxDiscountPaise: 100000, usageLimit: 200, perUserLimit: 2, isActive: true, expiresAt: freshExpiry() },
   { code: "EXPIRED1", type: "PERCENT", value: 20, minOrderPaise: 0, maxDiscountPaise: null, usageLimit: null, perUserLimit: null, isActive: true, expiresAt: new Date("2020-01-01T00:00:00Z") },
-  { code: "PAUSED20", type: "PERCENT", value: 20, minOrderPaise: 0, maxDiscountPaise: null, usageLimit: null, perUserLimit: null, isActive: false, expiresAt: null },
+  { code: "PAUSED20", type: "PERCENT", value: 20, minOrderPaise: 0, maxDiscountPaise: null, usageLimit: null, perUserLimit: null, isActive: false, expiresAt: freshExpiry() },
 ];
 
 const ORDER_STATUSES = ["pending", "confirmed", "packed", "shipped", "delivered"];

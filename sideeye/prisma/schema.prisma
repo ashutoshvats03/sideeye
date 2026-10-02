@@ -81,7 +81,7 @@ model Category {
   id        String   @id @default(cuid())
   name      String
   slug      String   @unique
-  image     String?
+  image     String // shop-by-category tile, always set
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -137,7 +137,10 @@ model Coupon {
   perUserLimit    Int?
   usedCount       Int       @default(0)
   startsAt        DateTime  @default(now())
-  expiresAt       DateTime?
+  // Validity window is exactly 5 days: expiresAt = startsAt + 5 days, set by the
+  // app at creation (see defaultCouponExpiry in lib/coupons.js). Prisma cannot
+  // express a relative column default, so this stays app-enforced, NOT NULL.
+  expiresAt       DateTime
   isActive        Boolean   @default(true)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

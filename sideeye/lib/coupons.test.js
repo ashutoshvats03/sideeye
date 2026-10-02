@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { validateCoupon, CouponError } from "./coupons.js";
+import { validateCoupon, CouponError, defaultCouponExpiry } from "./coupons.js";
 
 const NOW = new Date("2026-10-02T12:00:00Z");
 
@@ -306,6 +306,11 @@ test("generic coupon with usageLimit not yet reached is valid", () => {
     now: NOW,
   });
   expect(result).toBe(coupon);
+});
+
+test("defaultCouponExpiry is exactly startsAt + 5 days", () => {
+  const start = new Date("2026-10-02T10:00:00Z");
+  expect(defaultCouponExpiry(start).toISOString()).toBe("2026-10-07T10:00:00.000Z");
 });
 
 test("userCoupon for a different user is treated as unassigned", () => {

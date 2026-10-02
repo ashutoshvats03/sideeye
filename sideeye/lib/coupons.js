@@ -100,3 +100,19 @@ export function validateCoupon({
 
   return coupon;
 }
+
+/**
+ * Default coupon expiry: exactly 5 days after `startsAt`.
+ *
+ * Prisma cannot express a relative column default (`expiresAt = startsAt + 5d`),
+ * so every coupon-creation path (seeds, admin) must set `expiresAt` via this
+ * helper instead of leaving it null. The column is NOT NULL; null from old rows
+ * was backfilled to `startsAt + 5 days`.
+ *
+ * @param {Date|string} [startsAt] defaults to now
+ * @returns {Date} startsAt + 5 days
+ */
+export function defaultCouponExpiry(startsAt = new Date()) {
+  const start = new Date(startsAt);
+  return new Date(start.getTime() + 5 * 24 * 60 * 60 * 1000);
+}
