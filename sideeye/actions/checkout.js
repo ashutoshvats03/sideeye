@@ -6,7 +6,8 @@ import { getCurrentUser } from "../lib/guards.js";
 import { validateCoupon, CouponError } from "../lib/coupons.js";
 import { computeTotals } from "../lib/pricing.js";
 import { normaliseCheckoutItems, buildOrderNumber } from "../lib/order-core.js";
-import { canTransition } from "../lib/order-status.js";
+import { canTransition, legalSources } from "../lib/order-status.js";
+import { restorableItems } from "../lib/order-restore.js";
 import { checkRateLimit } from "../lib/rate-limit.js";
 
 /**
@@ -322,25 +323,15 @@ export async function cancelOrder(input) {
 
   try {
     await prisma.$transaction(async (tx) => {
-      // Restore stock atomically.
-      for (const item of order.items) {
-        await tx.product.updateMany({
-          where: { id: item.productId },
-          data: { stockQty: { increment: item.qty } },
-        });
-      }
-
-      // Return coupon usage.
-      if (order.couponId) {
-        await tx.coupon.update({
-          where: { id: order.couponId },
-          data: { usedCount: { decrement: 1 } },
-        });
-      }
-
-      // Set status to cancelled.
-      await tx.order.update({
-        where: { id: order.id },
+      // Claim the transition atomically FIRST: only one concurrent canceller
+      // matches a pending/confirmed row. A double-clicked second request
+      // matches zero rows and aborts here, before any stock or coupon write.
+      const claimed = await tx.order.updateMany({
+        where: {
+          id: order.id,
+          userId: user.id,
+          status: { in: legalSources("cancelled") },
+        },
         data: {
           status: "cancelled",
           timeline: [
@@ -349,8 +340,33 @@ export async function cancelOrder(input) {
           ],
         },
       });
+      if (claimed.count === 0) {
+        throw new Error("ORDER_ALREADY_MOVED");
+      }
+
+      // Restore stock atomically. Lines whose product was deleted
+      // (productId NULL via SetNull) are skipped — there is no row left
+      // to hold units, and id: null would fail the update.
+      for (const item of restorableItems(order.items)) {
+        await tx.product.updateMany({
+          where: { id: item.productId },
+          data: { stockQty: { increment: item.qty } },
+        });
+      }
+
+      // Return coupon usage. Guarded so a restore can never drive
+      // usedCount negative.
+      if (order.couponId) {
+        await tx.coupon.updateMany({
+          where: { id: order.couponId, usedCount: { gt: 0 } },
+          data: { usedCount: { decrement: 1 } },
+        });
+      }
     });
   } catch (err) {
+    if (err?.message === "ORDER_ALREADY_MOVED") {
+      return { ok: false, error: "This order was already updated. Please reload the page." };
+    }
     console.error("cancelOrder failed", { code: err?.code, message: err?.message });
     return { ok: false, error: "Something went wrong. Please try again." };
   }

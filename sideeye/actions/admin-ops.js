@@ -18,7 +18,9 @@ import {
   canTransition,
   isOrderStatus,
   legalTargets,
+  legalSources,
 } from "../lib/order-status.js";
+import { restorableItems } from "../lib/order-restore.js";
 import { validateCouponInput } from "../lib/coupon-input.js";
 import { defaultCouponExpiry } from "../lib/coupons.js";
 
@@ -77,11 +79,34 @@ export async function setOrderStatus(input) {
 
   const restoresStock = to === "cancelled" || to === "refunded";
 
+  // Claim the transition atomically FIRST inside the transaction: the
+  // status write only matches when the row still sits in a legal source
+  // status. A concurrent second attempt matches zero rows and aborts
+  // before any stock or coupon write, so double restores are impossible.
+  const timelineEntry = {
+    status: to,
+    at: new Date().toISOString(),
+    note: note || `Marked ${to} by admin`,
+  };
+
   try {
     await prisma.$transaction(async (tx) => {
+      const claimed = await tx.order.updateMany({
+        where: { id: order.id, status: { in: legalSources(to) } },
+        data: {
+          status: to,
+          ...(to === "refunded" ? { paymentStatus: "refunded" } : {}),
+          timeline: timelineAppend(order.timeline, to, timelineEntry.note),
+        },
+      });
+      if (claimed.count === 0) {
+        throw new Error("ORDER_ALREADY_MOVED");
+      }
+
       if (restoresStock) {
-        for (const item of order.items) {
-          if (!item.productId) continue;
+        // Skip lines whose product was deleted (productId NULL via
+        // SetNull) — no row left to restore into.
+        for (const item of restorableItems(order.items)) {
           await tx.product.updateMany({
             where: { id: item.productId },
             data: { stockQty: { increment: item.qty } },
@@ -95,20 +120,11 @@ export async function setOrderStatus(input) {
           });
         }
       }
-      await tx.order.update({
-        where: { id: order.id },
-        data: {
-          status: to,
-          ...(to === "refunded" ? { paymentStatus: "refunded" } : {}),
-          timeline: timelineAppend(
-            order.timeline,
-            to,
-            note || `Marked ${to} by admin`,
-          ),
-        },
-      });
     });
   } catch (err) {
+    if (err?.message === "ORDER_ALREADY_MOVED") {
+      return { ok: false, error: "This order was already updated. Please reload the page." };
+    }
     console.error("setOrderStatus failed", { code: err?.code, message: err?.message });
     return { ok: false, error: "Something went wrong. Please try again." };
   }

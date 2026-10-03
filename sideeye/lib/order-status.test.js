@@ -4,6 +4,7 @@ import {
   TRANSITIONS,
   canTransition,
   legalTargets,
+  legalSources,
   isOrderStatus,
 } from "./order-status.js";
 
@@ -71,5 +72,13 @@ describe("order status machine", () => {
 
   it("covers every status in the transition map", () => {
     expect(Object.keys(TRANSITIONS).sort()).toEqual([...ORDER_STATUSES].sort());
+  });
+
+  it("names the legal sources for a target status", () => {
+    expect(legalSources("cancelled").sort()).toEqual(["confirmed", "pending"]);
+    expect(legalSources("refunded")).toEqual(["delivered"]);
+    expect(legalSources("confirmed")).toEqual(["pending"]);
+    expect(legalSources("pending")).toEqual([]);
+    expect(legalSources("bogus")).toEqual([]);
   });
 });

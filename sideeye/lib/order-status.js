@@ -62,6 +62,20 @@ export function canTransition(from, to) {
 }
 
 /**
+ * Legal source statuses for a target. Unknown targets yield [].
+ * Used for conditional status claims inside transactions: the first writer
+ * whose `status IN (legalSources(to))` matches wins; a concurrent second
+ * attempt matches zero rows and must abort instead of double-restoring.
+ *
+ * @param {unknown} to
+ * @returns {string[]}
+ */
+export function legalSources(to) {
+  if (!isOrderStatus(to)) return [];
+  return ORDER_STATUSES.filter((from) => TRANSITIONS[from].includes(to));
+}
+
+/**
  * Throw a human-readable error when a move is illegal, naming the legal
  * moves so the admin UI can show what is actually possible.
  *

@@ -11,35 +11,16 @@
 import { useState } from "react";
 import { formatPaise } from "../../../lib/money.js";
 import {
+  couponFormToPayload,
+  couponToForm,
+  emptyCouponForm,
+} from "../../../lib/coupon-form.js";
+import {
   createCoupon,
   updateCoupon,
   setCouponActive,
   assignCouponToUser,
 } from "../../../actions/admin-ops.js";
-
-function rupeesToPaise(raw) {
-  const s = String(raw ?? "").trim();
-  if (s === "") return null;
-  const m = s.match(/^(\d+)(?:\.(\d{1,2}))?$/);
-  if (!m) return NaN;
-  return Number(m[1]) * 100 + Number((m[2] ?? "").padEnd(2, "0"));
-}
-
-function paiseToRupees(paise) {
-  if (paise == null) return "";
-  return `${Math.floor(paise / 100)}.${String(paise % 100).padStart(2, "0")}`;
-}
-
-const emptyForm = () => ({
-  code: "",
-  type: "PERCENT",
-  value: "20",
-  minOrder: "999.00",
-  maxDiscount: "",
-  usageLimit: "",
-  perUserLimit: "1",
-  isActive: true,
-});
 
 const inputCls =
   "w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none";
@@ -47,7 +28,7 @@ const inputCls =
 export default function CouponManager({ initialCoupons }) {
   const [coupons, setCoupons] = useState(initialCoupons);
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(emptyCouponForm);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState(null);
   const [assign, setAssign] = useState({ couponId: "", userEmail: "" });
@@ -57,48 +38,19 @@ export default function CouponManager({ initialCoupons }) {
 
   function startEdit(c) {
     setEditingId(c.id);
-    setForm({
-      code: c.code,
-      type: c.type,
-      value: String(c.value),
-      minOrder: paiseToRupees(c.minOrderPaise),
-      maxDiscount: c.maxDiscountPaise == null ? "" : paiseToRupees(c.maxDiscountPaise),
-      usageLimit: c.usageLimit == null ? "" : String(c.usageLimit),
-      perUserLimit: c.perUserLimit == null ? "" : String(c.perUserLimit),
-      isActive: c.isActive,
-    });
+    setForm(couponToForm(c));
     setMessage(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function cancelEdit() {
     setEditingId(null);
-    setForm(emptyForm());
+    setForm(emptyCouponForm());
     setMessage(null);
   }
 
   function buildPayload() {
-    const value = Number(form.value);
-    const minOrderPaise = rupeesToPaise(form.minOrder) ?? 0;
-    if (!Number.isInteger(minOrderPaise)) return { error: "Minimum order must look like 999.00." };
-    const maxDiscountPaise =
-      form.maxDiscount.trim() === "" ? null : rupeesToPaise(form.maxDiscount);
-    if (maxDiscountPaise !== null && !Number.isInteger(maxDiscountPaise)) {
-      return { error: "Max discount must look like 500.00 or be blank." };
-    }
-    const usageLimit = form.usageLimit.trim() === "" ? null : Number(form.usageLimit);
-    const perUserLimit = form.perUserLimit.trim() === "" ? null : Number(form.perUserLimit);
-    return {
-      data: {
-        type: form.type,
-        value,
-        minOrderPaise,
-        maxDiscountPaise,
-        usageLimit,
-        perUserLimit,
-        isActive: form.isActive,
-      },
-    };
+    return couponFormToPayload(form);
   }
 
   async function handleSubmit(e) {
