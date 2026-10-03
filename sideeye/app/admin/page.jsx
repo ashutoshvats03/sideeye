@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "../../lib/guards.js";
 import { prisma } from "../../lib/prisma.js";
 import { formatPaise } from "../../lib/money.js";
+import AdminNav from "./nav.jsx";
 
 export const metadata = {
   title: "Admin dashboard — SideEye",
@@ -49,31 +50,7 @@ export default async function AdminDashboardPage() {
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
       <h1 className="font-display text-3xl font-extrabold tracking-tight">Admin</h1>
 
-      <nav aria-label="Admin sections" className="mt-4 flex flex-wrap gap-2">
-        <span className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-bold text-white">
-          Dashboard
-        </span>
-        <Link
-          href="/admin/products"
-          className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-bold hover:border-neutral-900"
-        >
-          Products
-        </Link>
-        {[
-          ["Orders", "/admin/orders"],
-          ["Coupons", "/admin/coupons"],
-          ["Reviews", "/admin/reviews"],
-          ["Users", "/admin/users"],
-        ].map(([label, href]) => (
-          <Link
-            key={label}
-            href={href}
-            className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-bold hover:border-neutral-900"
-          >
-            {label}
-          </Link>
-        ))}
-      </nav>
+      <AdminNav current="/admin" />
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-neutral-200 p-4">

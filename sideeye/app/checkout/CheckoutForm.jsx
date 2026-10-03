@@ -1,16 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPaise } from "../../lib/money.js";
 import { addItem } from "../../lib/cart-storage.js";
+import {
+  DRAFT_KEY,
+  parseDraft,
+  isAddressStepComplete,
+} from "../../lib/checkout-draft.js";
+
+/** Read the persisted draft once (client-only; SSR has no localStorage). */
+function loadDraft() {
+  if (typeof window === "undefined") return null;
+  try {
+    return parseDraft(JSON.parse(window.localStorage.getItem(DRAFT_KEY)));
+  } catch {
+    return null;
+  }
+}
 
 export default function CheckoutForm({ lines, totals, suggestions, user, placeOrder, savedAddresses }) {
   const router = useRouter();
   const saved = Array.isArray(savedAddresses) ? savedAddresses : [];
-  // Preselect the default (first — the server sorts default-first), else new.
-  const [selectedId, setSelectedId] = useState(() => (saved.length > 0 ? saved[0].id : "new"));
-  const [address, setAddress] = useState({
+  // Draft-first init: a shopper who leaves checkout for the cart (qty change)
+  // and comes back sees the address they already typed.
+  const [selectedId, setSelectedId] = useState(() => {
+    const draft = loadDraft();
+    if (draft && (draft.selectedId === "new" || saved.some((a) => a.id === draft.selectedId))) {
+      return draft.selectedId;
+    }
+    return saved.length > 0 ? saved[0].id : "new";
+  });
+  const [address, setAddress] = useState(() => ({
     name: user.name ?? "",
     phone: "",
     line1: "",
@@ -18,11 +40,33 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
     city: "",
     state: "",
     pincode: "",
-  });
-  const [couponCode, setCouponCode] = useState("");
+    ...(loadDraft()?.address ?? {}),
+  }));
+  const [couponCode, setCouponCode] = useState(() => loadDraft()?.couponCode ?? "");
   const [couponMessage, setCouponMessage] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [step, setStep] = useState(1);
+
+  // Persist the draft on every change so navigating away never loses it.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ selectedId, address, couponCode }));
+    } catch {
+      // Storage full or blocked — checkout still works, the draft just won't survive.
+    }
+  }, [selectedId, address, couponCode]);
+
+  function goNext() {
+    const checked = isAddressStepComplete(selectedId, address);
+    if (!checked.ok) {
+      setError(checked.error);
+      return;
+    }
+    setError(null);
+    setStep(2);
+    window.scrollTo({ top: 0 });
+  }
 
   function update(field) {
     return (e) => setAddress((a) => ({ ...a, [field]: e.target.value }));
@@ -66,6 +110,11 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
     });
     setBusy(false);
     if (result.ok) {
+      try {
+        window.localStorage.removeItem(DRAFT_KEY);
+      } catch {
+        // Harmless — a stale draft just preselects next time.
+      }
       router.push(`/order-success?order=${result.orderNumber}`);
     } else {
       setError(result.error);
@@ -74,6 +123,13 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
 
   return (
     <form onSubmit={submit} className="space-y-6">
+      <ol aria-label="Checkout steps" className="flex gap-2 text-sm font-bold">
+        <li className={step === 1 ? "text-neutral-900" : "text-neutral-400"}>1. Address</li>
+        <li aria-hidden="true" className="text-neutral-300">→</li>
+        <li className={step === 2 ? "text-neutral-900" : "text-neutral-400"}>2. Review &amp; buy</li>
+      </ol>
+      {step === 1 ? (
+      <>
       <section aria-labelledby="address-heading">
         <h2 id="address-heading" className="font-display text-xl font-bold">
           Delivery address
@@ -226,7 +282,16 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
         </div>
         )}
       </section>
-
+      <button
+        type="button"
+        onClick={goNext}
+        className="w-full rounded-2xl bg-neutral-900 px-6 py-4 text-lg font-bold text-white transition hover:bg-black focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+      >
+        Next → Review &amp; buy
+      </button>
+      </>
+      ) : (
+      <>
       <section aria-labelledby="payment-heading">
         <h2 id="payment-heading" className="font-display text-xl font-bold">
           Payment
@@ -301,13 +366,27 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={busy}
-        className="w-full rounded-2xl bg-brand px-6 py-4 text-lg font-bold text-white transition hover:bg-brand-dark disabled:opacity-50 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
-      >
-        {busy ? "Placing order…" : `Place order · ${formatPaise(totals.totalPaise)}`}
-      </button>
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            setStep(1);
+            window.scrollTo({ top: 0 });
+          }}
+          className="rounded-2xl border-2 border-neutral-900 px-6 py-4 text-lg font-bold transition hover:bg-neutral-100 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+        >
+          ← Previous
+        </button>
+        <button
+          type="submit"
+          disabled={busy}
+          className="flex-1 rounded-2xl bg-brand px-6 py-4 text-lg font-bold text-white transition hover:bg-brand-dark disabled:opacity-50 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+        >
+          {busy ? "Placing order…" : `Place order · ${formatPaise(totals.totalPaise)}`}
+        </button>
+      </div>
+      </>
+      )}
     </form>
   );
 }

@@ -1,5 +1,6 @@
 import { requireAdmin } from "../../../lib/guards.js";
 import { prisma } from "../../../lib/prisma.js";
+import AdminNav from "../nav.jsx";
 import UserToggle from "./toggle.jsx";
 
 export const metadata = {
@@ -26,6 +27,7 @@ export default async function AdminUsersPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
       <h1 className="font-display text-3xl font-extrabold tracking-tight">Users</h1>
+      <AdminNav current="/admin/users" />
       <p className="mt-2 text-sm text-neutral-600">
         {users.length} most recent user(s). Deactivating blocks their next request
         immediately — only emails are shown, never more PII than this screen needs.

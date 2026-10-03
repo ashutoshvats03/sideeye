@@ -1,5 +1,6 @@
 import { requireAdmin } from "../../../lib/guards.js";
 import { prisma } from "../../../lib/prisma.js";
+import AdminNav from "../nav.jsx";
 import ReviewButtons from "./buttons.jsx";
 
 export const metadata = {
@@ -41,6 +42,7 @@ export default async function AdminReviewsPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
       <h1 className="font-display text-3xl font-extrabold tracking-tight">Reviews</h1>
+      <AdminNav current="/admin/reviews" />
       <p className="mt-2 text-sm text-neutral-600">
         {pending.length} awaiting moderation. Approving makes a review visible on the
         product page; only approved reviews ever render there.
