@@ -62,7 +62,10 @@ export const productInputSchema = z
       .max(20)
       .optional()
       .default([]),
-    images: z.array(imagePathSchema).max(10).optional().default([]),
+    images: z
+      .array(imagePathSchema)
+      .min(1, "Add at least one product photo.")
+      .max(10),
     isActive: z.boolean().optional().default(true),
   })
   .superRefine((val, ctx) => {

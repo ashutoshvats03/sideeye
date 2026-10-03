@@ -37,8 +37,16 @@ describe("product input schema", () => {
     ).toBe(false);
   });
 
-  it("rejects mrp below price and path-traversal images", () => {
+  it("rejects a product with no images", () => {
     expect(
+      productInputSchema.safeParse({ ...valid, images: [] }).success,
+    ).toBe(false);
+    expect(
+      productInputSchema.safeParse({ ...valid, images: undefined }).success,
+    ).toBe(false);
+  });
+
+  it("rejects mrp below price and path-traversal images", () => {    expect(
       productInputSchema.safeParse({
         ...valid,
         pricePaise: 20000,
