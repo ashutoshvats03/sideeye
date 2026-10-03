@@ -23,3 +23,16 @@ export function primaryImage(images) {
   }
   return FALLBACK_PRODUCT_IMAGE;
 }
+
+/**
+ * Append an uploaded photo url to the form's image list.
+ *
+ * @param {unknown} images current list (or anything unexpected)
+ * @param {unknown} url uploaded photo url
+ * @returns {string[]} new list, unchanged when the url is blank
+ */
+export function appendImage(images, url) {
+  const list = Array.isArray(images) ? images : [];
+  if (typeof url !== "string" || url.trim().length === 0) return [...list];
+  return [...list, url];
+}

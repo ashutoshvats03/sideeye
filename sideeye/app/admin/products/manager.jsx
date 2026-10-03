@@ -11,6 +11,7 @@
 
 import { useState } from "react";
 import { PRODUCT_VIBES, toggleVibeValue } from "../../../lib/catalog.js";
+import { appendImage } from "../../../lib/images.js";
 import {
   createProduct,
   updateProduct,
@@ -235,7 +236,11 @@ export default function ProductManager({ initialProducts, categories }) {
       document.getElementById("photos-section")?.scrollIntoView({ block: "nearest" });
       return;
     }
-    set((f) => ({ images: [...f.images, result.url] }));
+    // NOTE: `set` takes a patch OBJECT, not an updater function — the old
+    // code passed a function here (same bug as the vibe pills had), which
+    // spread into nothing, so uploaded photos never appeared in the form.
+    // Use a real setForm updater with the pure append helper (unit tested).
+    setForm((f) => ({ ...f, images: appendImage(f.images, result.url) }));
   }
 
   function toggleVibe(v) {
