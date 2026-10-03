@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatPaise } from "../lib/money.js";
 import { primaryImage } from "../lib/images.js";
+import WishlistHeart from "./WishlistHeart.jsx";
 
 /**
  * One product in a grid or rail.
@@ -33,6 +34,9 @@ export default function ProductCard({
     <article
       className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border-brand bg-white ${className}`}
     >
+      <div className="absolute right-3 top-3 z-10">
+        <WishlistHeart slug={slug} name={name} />
+      </div>
       <Link
         href={`/product/${slug}`}
         className="flex flex-1 flex-col focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand"

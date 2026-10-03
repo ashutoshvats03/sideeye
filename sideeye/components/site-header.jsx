@@ -64,6 +64,15 @@ export default async function SiteHeader() {
 
           <CartBadge />
 
+          <Link
+            href="/wishlist"
+            aria-label="Wishlist"
+            title="Wishlist"
+            className="rounded-lg px-2 py-2 text-lg font-semibold text-neutral-700 hover:bg-neutral-100 sm:px-3"
+          >
+            <span aria-hidden="true">♡</span>
+          </Link>
+
           {user ? (
             <>
               {isAdminRole(user.role) ? (

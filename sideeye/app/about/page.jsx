@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export const metadata = {
   title: "About — SideEye",
   description: "Funky anti-tarnish jewellery. Worth the second look.",
@@ -12,6 +14,14 @@ export default function AboutPage() {
       <h1 className="mt-2 font-display text-3xl font-bold sm:text-4xl">
         Jewellery that gets you a second look.
       </h1>
+      <Image
+        src="/brand/about-mascot.jpg"
+        alt="SideEye mascot showing off anti-tarnish jewellery"
+        width={1024}
+        height={1024}
+        sizes="(min-width: 768px) 720px, 100vw"
+        className="mt-6 aspect-square w-full rounded-3xl object-cover"
+      />
       <div className="mt-6 space-y-4 text-neutral-700">
         <p>
           SideEye started with a simple frustration: jewellery that looked
