@@ -43,6 +43,12 @@ export function formatPaiseToRupees(paise) {
   return `${sign}${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, "0")}`;
 }
 
+/** Red "Required" hint shown under an empty required field after a save attempt. */
+function RequiredHint({ show }) {
+  if (!show) return null;
+  return <p className="mt-1 text-xs font-bold text-red-700">Required</p>;
+}
+
 const emptyForm = (firstCategoryId) => ({
   name: "",
   slug: "",
@@ -73,6 +79,19 @@ export default function ProductManager({ initialProducts, categories }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState(null);
   const [uploading, setUploading] = useState(false);
+  // Becomes true on the first save attempt: required-field hints appear in
+  // red below each empty field instead of failing silently server-side.
+  const [tried, setTried] = useState(false);
+
+  const missing = {
+    name: form.name.trim() === "",
+    slug: form.slug.trim() === "",
+    description: form.description.trim() === "",
+    price: form.price.trim() === "",
+    stockQty: form.stockQty.trim() === "",
+    category: form.categoryId === "",
+    images: form.images.length === 0,
+  };
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
@@ -93,6 +112,7 @@ export default function ProductManager({ initialProducts, categories }) {
       isActive: p.isActive,
     });
     setMessage(null);
+    setTried(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -100,10 +120,25 @@ export default function ProductManager({ initialProducts, categories }) {
     setEditingId(null);
     setForm(emptyForm(categories[0]?.id));
     setMessage(null);
+    setTried(false);
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setTried(true);
+    // Recompute from current form (state above may lag this render).
+    const nowMissing =
+      form.name.trim() === "" ||
+      form.slug.trim() === "" ||
+      form.description.trim() === "" ||
+      form.price.trim() === "" ||
+      form.stockQty.trim() === "" ||
+      form.categoryId === "" ||
+      form.images.length === 0;
+    if (nowMissing) {
+      setMessage({ ok: false, text: "Fill the fields marked Required below." });
+      return;
+    }
     setBusy(true);
     setMessage(null);
 
@@ -232,9 +267,9 @@ export default function ProductManager({ initialProducts, categories }) {
                   slug: editingId ? form.slug : slugify(name),
                 });
               }}
-              required
               maxLength={120}
             />
+            <RequiredHint show={tried && missing.name} />
           </label>
           <label className="block text-sm">
             <span className="font-bold">Slug</span>
@@ -242,9 +277,9 @@ export default function ProductManager({ initialProducts, categories }) {
               className={inputCls}
               value={form.slug}
               onChange={(e) => set({ slug: e.target.value })}
-              required
               maxLength={120}
             />
+            <RequiredHint show={tried && missing.slug} />
           </label>
         </div>
 
@@ -255,9 +290,9 @@ export default function ProductManager({ initialProducts, categories }) {
             rows={3}
             value={form.description}
             onChange={(e) => set({ description: e.target.value })}
-            required
             maxLength={5000}
           />
+          <RequiredHint show={tried && missing.description} />
         </label>
 
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -290,8 +325,8 @@ export default function ProductManager({ initialProducts, categories }) {
               onChange={(e) => set({ price: e.target.value })}
               inputMode="decimal"
               placeholder="199.99"
-              required
             />
+            <RequiredHint show={tried && missing.price} />
           </label>
           <label className="block text-sm">
             <span className="font-bold">MRP (₹, optional)</span>
@@ -313,8 +348,8 @@ export default function ProductManager({ initialProducts, categories }) {
               step={1}
               value={form.stockQty}
               onChange={(e) => set({ stockQty: e.target.value })}
-              required
             />
+            <RequiredHint show={tried && missing.stockQty} />
           </label>
         </div>
 
@@ -325,7 +360,6 @@ export default function ProductManager({ initialProducts, categories }) {
               className={inputCls}
               value={form.categoryId}
               onChange={(e) => set({ categoryId: e.target.value })}
-              required
             >
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -333,6 +367,7 @@ export default function ProductManager({ initialProducts, categories }) {
                 </option>
               ))}
             </select>
+            <RequiredHint show={tried && missing.category} />
           </label>
           <div className="text-sm">
             <span className="font-bold">Vibes</span>
@@ -360,7 +395,12 @@ export default function ProductManager({ initialProducts, categories }) {
         </div>
 
         <div className="mt-3 text-sm">
-          <span className="font-bold">Images ({form.images.length})</span>
+          <span className="font-bold">Photos (required)</span>
+          {tried && missing.images && (
+            <p className="mt-1 text-xs font-bold text-red-700">
+              Required — add at least one product photo.
+            </p>
+          )}
           {form.images.length > 0 && (
             <ul className="mt-1 space-y-1">
               {form.images.map((url) => (
