@@ -15,7 +15,7 @@ import { useState } from "react";
  */
 export default function Reviews({ productId, reviews, summary, canReview, isSignedIn }) {
   return (
-    <section aria-labelledby="reviews-heading" className="border-t border-neutral-200 pt-12">
+    <section id="reviews" aria-labelledby="reviews-heading" className="border-t border-neutral-200 pt-12 scroll-mt-24">
       <h2 id="reviews-heading" className="font-display text-3xl font-bold">
         Reviews
       </h2>

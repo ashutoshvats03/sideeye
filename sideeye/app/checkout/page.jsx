@@ -36,6 +36,27 @@ export default async function CheckoutPage() {
     null,
   );
 
+  // Saved addresses for the picker: default first, then newest. Serialized to
+  // plain JSON (Dates don't cross the server/client boundary).
+  const savedAddresses = (
+    await prisma.address.findMany({
+      where: { userId: user.id },
+      orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        label: true,
+        name: true,
+        phone: true,
+        line1: true,
+        line2: true,
+        city: true,
+        state: true,
+        pincode: true,
+        isDefault: true,
+      },
+    })
+  ).map((a) => ({ ...a }));
+
   // "Complete the look" rail: same-category in-stock products not already in the cart.
   // The loop runs once per cart line, so two lines sharing a category fetch the
   // same related set — dedupe by slug or React sees duplicate keys.
@@ -78,6 +99,7 @@ export default async function CheckoutPage() {
           suggestions={suggestions}
           user={user}
           placeOrder={placeOrder}
+          savedAddresses={savedAddresses}
         />
 
         <aside className="rounded-3xl bg-surface p-6 ring-1 ring-neutral-200">

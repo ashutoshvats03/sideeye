@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { formatPaise } from "../lib/money.js";
+import { primaryImage } from "../lib/images.js";
 
 /**
  * One product in a grid or rail.
@@ -21,7 +22,7 @@ export default function ProductCard({
 }) {
   const { name, slug, pricePaise, mrpPaise, images, vibes, stockQty } = product;
 
-  const imageSrc = images?.[0] ?? "/brand/product-ring-red-stone.jpg";
+  const imageSrc = primaryImage(images);
   const soldOut = stockQty === 0;
   const hasDiscount = mrpPaise != null && mrpPaise > pricePaise;
   const discountPercent = hasDiscount

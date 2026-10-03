@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { primaryImage } from "../lib/images.js";
 import { useState } from "react";
 
 /**
@@ -19,9 +20,9 @@ export default function Gallery({ images = [], alt = "" }) {
   // A product's images can change between renders (admin edit). Clamp rather than trust
   // the previous index, or the main frame renders an undefined src.
   const safeIndex = Math.min(index, Math.max(images.length - 1, 0));
-  const current = images[safeIndex];
-
-  if (!current) return null;
+  // A product with no photos yet shows the brand fallback instead of an empty
+  // frame — Gallery must never hand next/image an undefined src.
+  const current = images[safeIndex] ?? primaryImage(images);
 
   const multiple = images.length > 1;
 

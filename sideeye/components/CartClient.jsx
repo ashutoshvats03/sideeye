@@ -7,6 +7,7 @@ import { formatPaise } from "../lib/money.js";
 import { FREE_SHIPPING_ABOVE_PAISE } from "../lib/pricing.js";
 import { MAX_QTY_PER_LINE } from "../lib/cart.js";
 import { readCart, updateItem, removeItem, clearCart } from "../lib/cart-storage.js";
+import { primaryImage } from "../lib/images.js";
 
 /**
  * The cart page body.
@@ -202,7 +203,7 @@ export default function CartClient() {
               className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-surface"
             >
               <Image
-                src={product.images[0]}
+                src={primaryImage(product.images)}
                 alt={product.name}
                 width={192}
                 height={192}

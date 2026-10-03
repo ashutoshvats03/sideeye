@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { formatPaise } from "../../lib/money.js";
 import { addItem } from "../../lib/cart-storage.js";
 
-export default function CheckoutForm({ lines, totals, suggestions, user, placeOrder }) {
+export default function CheckoutForm({ lines, totals, suggestions, user, placeOrder, savedAddresses }) {
   const router = useRouter();
+  const saved = Array.isArray(savedAddresses) ? savedAddresses : [];
+  // Preselect the default (first — the server sorts default-first), else new.
+  const [selectedId, setSelectedId] = useState(() => (saved.length > 0 ? saved[0].id : "new"));
   const [address, setAddress] = useState({
     name: user.name ?? "",
     phone: "",
@@ -47,9 +50,17 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
     setError(null);
     setBusy(true);
     const idempotencyKey = crypto.randomUUID();
+    // Saved-address path sends ONLY the id — the server resolves it
+    // owner-scoped and freezes it into addressSnapshot. The new-address path
+    // sends the inline fields, which the server validates AND saves to the
+    // address book (deduped) after the order succeeds.
+    const payload =
+      selectedId === "new"
+        ? { address }
+        : { addressId: selectedId };
     const result = await placeOrder({
       items: lines.map((l) => ({ slug: l.slug, qty: l.qty })),
-      address,
+      ...payload,
       couponCode: couponCode.trim(),
       idempotencyKey,
     });
@@ -67,6 +78,60 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
         <h2 id="address-heading" className="font-display text-xl font-bold">
           Delivery address
         </h2>
+        {saved.length > 0 && (
+          <fieldset className="mt-4 space-y-3">
+            <legend className="text-sm font-semibold text-neutral-600">
+              Choose a saved address
+            </legend>
+            {saved.map((a) => (
+              <label
+                key={a.id}
+                className={`flex cursor-pointer items-start gap-3 rounded-2xl border-2 px-4 py-3 ${
+                  selectedId === a.id ? "border-neutral-900" : "border-neutral-200"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="saved-address"
+                  checked={selectedId === a.id}
+                  onChange={() => setSelectedId(a.id)}
+                  className="mt-1 h-5 w-5 accent-brand"
+                />
+                <span className="text-sm">
+                  <span className="font-bold">
+                    {a.label ? `${a.label} · ` : ""}
+                    {a.name}
+                  </span>
+                  {a.isDefault && (
+                    <span className="ml-2 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-bold text-brand-dark">
+                      Default
+                    </span>
+                  )}
+                  <span className="mt-0.5 block text-neutral-600">
+                    {a.line1}
+                    {a.line2 ? `, ${a.line2}` : ""}, {a.city}, {a.state} — {a.pincode}
+                  </span>
+                  <span className="block text-neutral-600">{a.phone}</span>
+                </span>
+              </label>
+            ))}
+            <label
+              className={`flex cursor-pointer items-center gap-3 rounded-2xl border-2 px-4 py-3 ${
+                selectedId === "new" ? "border-neutral-900" : "border-neutral-200"
+              }`}
+            >
+              <input
+                type="radio"
+                name="saved-address"
+                checked={selectedId === "new"}
+                onChange={() => setSelectedId("new")}
+                className="h-5 w-5 accent-brand"
+              />
+              <span className="text-sm font-bold">Use a new address</span>
+            </label>
+          </fieldset>
+        )}
+        {selectedId === "new" && (
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="name" className="block text-sm font-semibold">
@@ -159,6 +224,7 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
             />
           </div>
         </div>
+        )}
       </section>
 
       <section aria-labelledby="payment-heading">

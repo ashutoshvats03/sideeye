@@ -13,6 +13,7 @@ import {
   updateAddressForUser,
   deleteAddressForUser,
   setDefaultAddressForUser,
+  maybeSaveAddressForUser,
 } from "./addresses.js";
 
 const RUN = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -107,4 +108,20 @@ test("update edits own fields; delete removes own row; both refuse another user'
   const del = await deleteAddressForUser(prisma, owner.id, owned.address.id);
   expect(del.ok).toBe(true);
   expect(await prisma.address.findUnique({ where: { id: owned.address.id } })).toBeNull();
+});
+
+test("checkout autosave stores a new address once, never as default, skips duplicates", async () => {
+  const user = await makeUser("autosave");
+  const typed = { ...VALID, line2: "" };
+
+  const first = await maybeSaveAddressForUser(prisma, user.id, typed);
+  expect(first).toEqual({ saved: true });
+  let rows = await prisma.address.findMany({ where: { userId: user.id } });
+  expect(rows).toHaveLength(1);
+  expect(rows[0].isDefault).toBe(false);
+
+  const second = await maybeSaveAddressForUser(prisma, user.id, { ...typed });
+  expect(second).toEqual({ saved: false });
+  rows = await prisma.address.findMany({ where: { userId: user.id } });
+  expect(rows).toHaveLength(1);
 });

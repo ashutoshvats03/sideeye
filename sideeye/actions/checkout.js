@@ -8,6 +8,7 @@ import { computeTotals } from "../lib/pricing.js";
 import { normaliseCheckoutItems, buildOrderNumber } from "../lib/order-core.js";
 import { canTransition, legalSources } from "../lib/order-status.js";
 import { restorableItems } from "../lib/order-restore.js";
+import { maybeSaveAddressForUser } from "../lib/addresses.js";
 import { checkRateLimit } from "../lib/rate-limit.js";
 
 /**
@@ -279,6 +280,21 @@ export async function placeOrder(input) {
     }
     console.error("placeOrder failed", { code: err?.code, message: err?.message });
     return { ok: false, error: "Something went wrong. Please try again." };
+  }
+
+  // Checkout autosave: an address typed fresh at checkout joins the user's
+  // book (unless identical to one already there) so the next checkout can
+  // offer it as a suggestion. Best-effort and outside the order transaction —
+  // a save failure must never fail an order that already placed.
+  if (!addressId && address) {
+    try {
+      await maybeSaveAddressForUser(prisma, user.id, address);
+    } catch (err) {
+      console.error("checkout address autosave failed", {
+        code: err?.code,
+        message: err?.message,
+      });
+    }
   }
 
   return { ok: true, orderNumber };

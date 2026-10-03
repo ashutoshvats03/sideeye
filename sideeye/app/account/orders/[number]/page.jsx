@@ -5,6 +5,7 @@ import { requireUser } from "../../../../lib/guards.js";
 import { prisma } from "../../../../lib/prisma.js";
 import { formatPaise } from "../../../../lib/money.js";
 import { normaliseTimeline } from "../../../../lib/timeline.js";
+import { pendingReviewItems } from "../../../../lib/review-nudge.js";
 import { cancelOrder } from "../../../../actions/checkout.js";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +47,34 @@ export default async function AccountOrderDetailPage({ params }) {
   if (!order) notFound();
 
   const entries = normaliseTimeline(order.timeline);
+
+  // Review nudge: only on delivered orders, only for items the user hasn't
+  // reviewed and whose product is still live. Writing a review stays optional
+  // — this section simply links to the product's review form, and shrinks as
+  // items get reviewed until nothing is left to ask about.
+  const liveItems = order.items
+    .filter((item) => item.productId && item.product?.isActive && item.product?.slug)
+    .map((item) => ({
+      productId: item.productId,
+      name: item.nameSnapshot,
+      slug: item.product.slug,
+    }));
+  const reviewedIds =
+    liveItems.length > 0 && order.status === "delivered"
+      ? new Set(
+          (
+            await prisma.review.findMany({
+              where: {
+                userId: user.id,
+                productId: { in: liveItems.map((i) => i.productId) },
+              },
+              select: { productId: true },
+            })
+          ).map((r) => r.productId),
+        )
+      : new Set();
+  const nudgeItems =
+    order.status === "delivered" ? pendingReviewItems(liveItems, [...reviewedIds]) : [];
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -175,6 +204,30 @@ export default async function AccountOrderDetailPage({ params }) {
               </li>
             ))}
           </ol>
+        </section>
+      ) : null}
+
+      {nudgeItems.length > 0 ? (
+        <section
+          aria-label="Review your pieces"
+          className="mt-4 rounded-3xl bg-brand/5 p-6 text-sm ring-1 ring-brand/20"
+        >
+          <h2 className="font-bold">Enjoying your pieces?</h2>
+          <p className="mt-1 text-neutral-600">
+            Tell other shoppers what you think — totally optional.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {nudgeItems.map((item) => (
+              <li key={item.productId}>
+                <Link
+                  href={`/product/${item.slug}#reviews`}
+                  className="font-semibold text-brand-dark hover:underline"
+                >
+                  Review {item.name} →
+                </Link>
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
 

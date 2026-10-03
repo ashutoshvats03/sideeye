@@ -10,6 +10,8 @@
  * Postgres without booting Auth.js — the `lib/users.js` pattern).
  */
 
+import { isSameAddress } from "./address-match.js";
+
 function notFound() {
   return { ok: false, error: "Address not found." };
 }
@@ -23,6 +25,41 @@ export async function createAddressForUser(db, userId, data) {
     data: { ...data, userId, isDefault: false },
   });
   return { ok: true, address };
+}
+
+/**
+ * Save a checkout-typed address to the user's book, unless an identical row
+ * already exists. Autosaved rows are never the default (explicit-defaults
+ * ruling) and carry no label. Returns `{ saved: true/false }` — a save that
+ * finds a duplicate is a quiet no-op, not an error.
+ */
+export async function maybeSaveAddressForUser(db, userId, fields) {
+  const existing = await db.address.findMany({
+    where: { userId },
+    select: {
+      name: true,
+      phone: true,
+      line1: true,
+      line2: true,
+      city: true,
+      state: true,
+      pincode: true,
+    },
+  });
+  if (existing.some((row) => isSameAddress(row, fields))) {
+    return { saved: false };
+  }
+  await createAddressForUser(db, userId, {
+    label: null,
+    name: fields.name,
+    phone: fields.phone,
+    line1: fields.line1,
+    line2: fields.line2 ?? "",
+    city: fields.city,
+    state: fields.state,
+    pincode: fields.pincode,
+  });
+  return { saved: true };
 }
 
 /** Edit an owned address. `isDefault` cannot be changed here. */
