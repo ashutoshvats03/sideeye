@@ -59,14 +59,19 @@ export default async function AdminDashboardPage() {
         >
           Products
         </Link>
-        {["Orders", "Coupons", "Reviews", "Users"].map((label) => (
-          <span
+        {[
+          ["Orders", "/admin/orders"],
+          ["Coupons", "/admin/coupons"],
+          ["Reviews", "/admin/reviews"],
+          ["Users", "/admin/users"],
+        ].map(([label, href]) => (
+          <Link
             key={label}
-            title="Arrives in Task 2"
-            className="cursor-not-allowed rounded-full border border-dashed border-neutral-200 px-4 py-1.5 text-sm text-neutral-400"
+            href={href}
+            className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-bold hover:border-neutral-900"
           >
             {label}
-          </span>
+          </Link>
         ))}
       </nav>
 

@@ -6,6 +6,7 @@ import { getCurrentUser } from "../lib/guards.js";
 import { validateCoupon, CouponError } from "../lib/coupons.js";
 import { computeTotals } from "../lib/pricing.js";
 import { normaliseCheckoutItems, buildOrderNumber } from "../lib/order-core.js";
+import { canTransition } from "../lib/order-status.js";
 import { checkRateLimit } from "../lib/rate-limit.js";
 
 /**
@@ -305,7 +306,8 @@ export async function cancelOrder(input) {
 
   const { orderId } = parsed.data;
 
-  // Owner-only: User A cannot cancel User B's order.
+  // Owner-only: User A cannot cancel User B's order. The cancellable set is
+  // owned by lib/order-status.js (cancel only from pending/confirmed).
   const order = await prisma.order.findFirst({
     where: { id: orderId, userId: user.id },
     include: { items: true },
@@ -314,7 +316,7 @@ export async function cancelOrder(input) {
     return { ok: false, error: "Order not found." };
   }
 
-  if (!["pending", "confirmed"].includes(order.status)) {
+  if (!canTransition(order.status, "cancelled")) {
     return { ok: false, error: "This order can no longer be cancelled." };
   }
 
