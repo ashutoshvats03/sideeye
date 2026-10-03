@@ -10,7 +10,7 @@
  */
 
 import { useState } from "react";
-import { PRODUCT_VIBES } from "../../../lib/catalog.js";
+import { PRODUCT_VIBES, toggleVibeValue } from "../../../lib/catalog.js";
 import {
   createProduct,
   updateProduct,
@@ -239,9 +239,10 @@ export default function ProductManager({ initialProducts, categories }) {
   }
 
   function toggleVibe(v) {
-    set((f) => ({
-      vibes: f.vibes.includes(v) ? f.vibes.filter((x) => x !== v) : [...f.vibes, v],
-    }));
+    // NOTE: `set` takes a patch OBJECT, not an updater function — passing a
+    // function gets spread into nothing and the pills never select. Use a
+    // real setForm updater with the pure toggle helper (unit tested).
+    setForm((f) => ({ ...f, vibes: toggleVibeValue(f.vibes, v) }));
   }
 
   const inputCls =
