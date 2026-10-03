@@ -213,6 +213,16 @@ export default function ProductManager({ initialProducts, categories }) {
   async function handleFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Client-side size gate first: mirror of MAX_IMAGE_BYTES in
+    // lib/storage.js (node-only, cannot import into this client component).
+    // Phone photos routinely exceed it — failing fast here shows the reason
+    // right under the Photos section instead of a banner at the top.
+    if (file.size > 5 * 1024 * 1024) {
+      e.target.value = "";
+      setMessage({ ok: false, text: "That photo is over 5MB — pick a smaller file or screenshot it." });
+      document.getElementById("photos-section")?.scrollIntoView({ block: "nearest" });
+      return;
+    }
     setUploading(true);
     setMessage(null);
     const fd = new FormData();
@@ -222,6 +232,7 @@ export default function ProductManager({ initialProducts, categories }) {
     e.target.value = "";
     if (!result.ok) {
       setMessage({ ok: false, text: result.error });
+      document.getElementById("photos-section")?.scrollIntoView({ block: "nearest" });
       return;
     }
     set((f) => ({ images: [...f.images, result.url] }));
@@ -240,6 +251,7 @@ export default function ProductManager({ initialProducts, categories }) {
     <div className="mt-6">
       {message && (
         <p
+          id="form-message"
           role={message.ok ? "status" : "alert"}
           className={`rounded-2xl p-3 text-sm font-bold ${
             message.ok ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
@@ -394,7 +406,7 @@ export default function ProductManager({ initialProducts, categories }) {
           </div>
         </div>
 
-        <div className="mt-3 text-sm">
+        <div className="mt-3 text-sm" id="photos-section">
           <span className="font-bold">Photos (required)</span>
           <p className="mt-1 text-xs text-neutral-500">
             At least 1 photo, up to 10. Each under 5MB — JPG, PNG, WebP, GIF or AVIF.
