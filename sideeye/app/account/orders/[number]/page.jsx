@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { requireUser } from "../../../../lib/guards.js";
 import { prisma } from "../../../../lib/prisma.js";
 import { formatPaise } from "../../../../lib/money.js";
@@ -40,7 +41,7 @@ export default async function AccountOrderDetailPage({ params }) {
 
   const order = await prisma.order.findFirst({
     where: { number, userId: user.id },
-    include: { items: true },
+    include: { items: { include: { product: { select: { slug: true, isActive: true } } } } },
   });
   if (!order) notFound();
 
@@ -78,15 +79,34 @@ export default async function AccountOrderDetailPage({ params }) {
 
       <section aria-label="Items" className="mt-6 rounded-3xl bg-surface p-6 ring-1 ring-neutral-200">
         <h2 className="font-bold">Items</h2>
-        <dl className="mt-3 space-y-1 text-sm">
-          {order.items.map((item) => (
-            <div key={item.id} className="flex justify-between">
-              <dt>
-                {item.nameSnapshot} × {item.qty}
-              </dt>
-              <dd className="font-semibold">{formatPaise(item.pricePaise * item.qty)}</dd>
-            </div>
-          ))}
+        <dl className="mt-3 space-y-3 text-sm">
+          {order.items.map((item) => {
+            const live = item.product && item.product.isActive ? item.product.slug : null;
+            return (
+              <div key={item.id} className="flex items-center gap-3">
+                {item.imageSnapshot ? (
+                  <Image
+                    src={item.imageSnapshot}
+                    alt=""
+                    width={56}
+                    height={56}
+                    className="h-14 w-14 shrink-0 rounded-xl object-cover ring-1 ring-neutral-200"
+                  />
+                ) : null}
+                <dt className="flex-1">
+                  {live ? (
+                    <Link href={`/product/${live}`} className="font-semibold hover:underline">
+                      {item.nameSnapshot}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold">{item.nameSnapshot}</span>
+                  )}
+                  <span className="text-neutral-600"> × {item.qty}</span>
+                </dt>
+                <dd className="font-semibold">{formatPaise(item.pricePaise * item.qty)}</dd>
+              </div>
+            );
+          })}
         </dl>
         <dl className="mt-3 space-y-1 border-t border-neutral-200 pt-3 text-sm">
           <div className="flex justify-between">
