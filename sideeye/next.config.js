@@ -7,6 +7,13 @@ const nextConfig = {
   // page as dead server HTML — buttons do nothing, cart spins forever.
   // Dev-only; production builds are unaffected.
   allowedDevOrigins: ["192.168.1.15"],
+  // Admin product-image uploads ride in a server-action FormData body.
+  // Next caps action bodies at 1MB by default; product photos need more.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
+  },
 };
 
 module.exports = nextConfig;
