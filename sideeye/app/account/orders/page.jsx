@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireUser } from "../../../lib/guards.js";
 import { prisma } from "../../../lib/prisma.js";
 import { formatPaise } from "../../../lib/money.js";
@@ -35,7 +36,11 @@ export default async function AccountOrdersPage() {
             <li key={order.id} className="rounded-3xl bg-surface p-6 ring-1 ring-neutral-200">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <p className="font-bold">{order.number}</p>
+                  <p className="font-bold">
+                    <Link href={`/account/orders/${order.number}`} className="hover:underline">
+                      {order.number}
+                    </Link>
+                  </p>
                   <p className="text-sm text-neutral-600">
                     {new Date(order.createdAt).toLocaleDateString("en-IN", {
                       day: "numeric",

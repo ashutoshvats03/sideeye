@@ -35,6 +35,8 @@ model User {
   name          String?
   email         String    @unique
   phone         String?
+  // Optional birthday, set by the user on /account. Nullable, no backfill.
+  dateOfBirth   DateTime?
   passwordHash  String?
   role          String    @default("customer") // customer | admin
   avatar        String?
