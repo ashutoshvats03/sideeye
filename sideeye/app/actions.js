@@ -21,7 +21,11 @@ export async function signInAction(formData) {
     "/account",
   );
 
-  await signIn("google", { redirectTo });
+  // `prompt: "select_account"` forces Google's account chooser on every login.
+  // Without it, Google's own SSO cookie silently re-authenticates whoever logged
+  // in last — logging out of the shop then "logging in" as someone else would
+  // land straight back in the first account with no chooser.
+  await signIn("google", { redirectTo }, { prompt: "select_account" });
 }
 
 /**
