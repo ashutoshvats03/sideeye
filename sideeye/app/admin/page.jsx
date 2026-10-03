@@ -50,7 +50,7 @@ export default async function AdminDashboardPage() {
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
       <h1 className="font-display text-3xl font-extrabold tracking-tight">Admin</h1>
 
-      <AdminNav current="/admin" />
+      <AdminNav current="/admin" pager={false} />
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-neutral-200 p-4">

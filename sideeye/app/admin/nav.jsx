@@ -7,7 +7,7 @@ import { ADMIN_SECTIONS, adminNeighbors } from "../../lib/admin-sections.js";
  * Rendered on every /admin/* page; the section order lives in
  * lib/admin-sections.js, not copy-pasted here.
  */
-export default function AdminNav({ current }) {
+export default function AdminNav({ current, pager = true }) {
   const { prev, next } = adminNeighbors(current);
   return (
     <div>
@@ -32,6 +32,7 @@ export default function AdminNav({ current }) {
           ),
         )}
       </nav>
+      {pager ? (
       <div className="mt-3 flex items-center justify-between gap-2">
         {prev ? (
           <Link
@@ -54,6 +55,7 @@ export default function AdminNav({ current }) {
           <span />
         )}
       </div>
+      ) : null}
     </div>
   );
 }

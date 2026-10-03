@@ -287,7 +287,7 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
         onClick={goNext}
         className="w-full rounded-2xl bg-neutral-900 px-6 py-4 text-lg font-bold text-white transition hover:bg-black focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
       >
-        Next → Review &amp; buy
+        Review &amp; buy
       </button>
       </>
       ) : (
