@@ -396,6 +396,10 @@ export default function ProductManager({ initialProducts, categories }) {
 
         <div className="mt-3 text-sm">
           <span className="font-bold">Photos (required)</span>
+          <p className="mt-1 text-xs text-neutral-500">
+            At least 1 photo, up to 10. Each under 5MB — JPG, PNG, WebP, GIF or AVIF.
+            Phone photos over 5MB are rejected; shrink or screenshot first.
+          </p>
           {tried && missing.images && (
             <p className="mt-1 text-xs font-bold text-red-700">
               Required — add at least one product photo.
