@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "**" },
+      { protocol: "http", hostname: "localhost" },
+    ],
+  },
   reactStrictMode: true,
   // Dev over the local network (phone/laptop on the same Wi-Fi) loads the
   // page from a non-localhost origin. Next.js 16 blocks cross-origin access
