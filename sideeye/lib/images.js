@@ -8,7 +8,7 @@
  */
 
 /** Shown whenever a product has no usable photo of its own. */
-export const FALLBACK_PRODUCT_IMAGE = "/brand/product-ring-red-stone.jpg";
+export const FALLBACK_PRODUCT_IMAGE = "https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqtbjdb-859810e1e784-product-ring-red-stone.jpg";
 
 /**
  * First usable photo, or the brand fallback.
@@ -22,4 +22,17 @@ export function primaryImage(images) {
     if (first) return first;
   }
   return FALLBACK_PRODUCT_IMAGE;
+}
+
+/**
+ * Append an uploaded photo url to the form's image list.
+ *
+ * @param {unknown} images current list (or anything unexpected)
+ * @param {unknown} url uploaded photo url
+ * @returns {string[]} new list, unchanged when the url is blank
+ */
+export function appendImage(images, url) {
+  const list = Array.isArray(images) ? images : [];
+  if (typeof url !== "string" || url.trim().length === 0) return [...list];
+  return [...list, url];
 }

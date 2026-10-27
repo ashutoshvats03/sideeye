@@ -20,12 +20,12 @@ const prisma = new PrismaClient({ adapter });
  * no fewer. Each has a shop-by-category image.
  */
 const CATEGORIES = [
-  { name: "Necklace", slug: "necklace", image: "/brand/products/blush-heart-necklace.jpg", sortOrder: 1 },
-  { name: "Earring", slug: "earring", image: "/brand/products/beaded-cascade-earrings.jpg", sortOrder: 2 },
-  { name: "Anklet", slug: "anklet", image: "/brand/products/prism-line-bracelet.jpg", sortOrder: 3 },
-  { name: "Ring", slug: "ring", image: "/brand/products/ruby-ember-ring.jpg", sortOrder: 4 },
-  { name: "Bracelet", slug: "bracelet", image: "/brand/products/prism-line-bracelet.jpg", sortOrder: 5 },
-  { name: "Arm Bracelet", slug: "arm-bracelet", image: "/brand/products/petal-cuff-arm-bracelet.jpg", sortOrder: 6 },
+  { name: "Necklace", slug: "necklace", image: "https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9v6u-471f5eee32d2-blush-heart-necklace.jpg", sortOrder: 1 },
+  { name: "Earring", slug: "earring", image: "https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9s0m-1391fc80d414-beaded-cascade-earrings.jpg", sortOrder: 2 },
+  { name: "Anklet", slug: "anklet", image: "https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9xpd-060753fa0db1-prism-line-bracelet.jpg", sortOrder: 3 },
+  { name: "Ring", slug: "ring", image: "https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9nzd-cecc4a0388ff-ruby-ember-ring.jpg", sortOrder: 4 },
+  { name: "Bracelet", slug: "bracelet", image: "https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9xpd-060753fa0db1-prism-line-bracelet.jpg", sortOrder: 5 },
+  { name: "Arm Bracelet", slug: "arm-bracelet", image: "https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqta01d-05971b7e3adb-petal-cuff-arm-bracelet.jpg", sortOrder: 6 },
 ];
 
 /**
@@ -52,7 +52,7 @@ const PRODUCTS = [
     stockQty: 12,
     vibes: ["Queen", "Slay"],
     tags: ["statement", "red"],
-    images: ["/brand/products/ruby-ember-ring.jpg", "/brand/lifestyle/ring-on-red-satin.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9nzd-cecc4a0388ff-ruby-ember-ring.jpg", "https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9ouo-d6cfd9a43496-ring-on-red-satin.jpg"],
     description:
       "A wide gold band crowned with a deep ruby-red cabochon. Bold enough to be the only ring you wear.",
     materials: "Gold-tone alloy, glass cabochon",
@@ -69,7 +69,7 @@ const PRODUCTS = [
     stockQty: 8,
     vibes: ["Queen"],
     tags: ["chunky", "minimal"],
-    images: ["/brand/products/marble-halo-ring.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9pkz-f3ad8faf1908-marble-halo-ring.jpg"],
     description:
       "Chunky interlocking gold links with a white marble centre. Quiet luxury, loud silhouette.",
     materials: "Gold-tone alloy, marble-effect stone",
@@ -86,7 +86,7 @@ const PRODUCTS = [
     stockQty: 15,
     vibes: ["Baddie", "Funky"],
     tags: ["pink", "floral"],
-    images: ["/brand/products/desert-bloom-ring.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9qb9-4496af1ff6bf-desert-bloom-ring.jpg"],
     description:
       "A pink enamel flower with a pavé dragonfly. Open band, so it stacks or wears solo.",
     materials: "Gold-tone alloy, enamel, rhinestone",
@@ -103,7 +103,7 @@ const PRODUCTS = [
     stockQty: 20,
     vibes: ["Funky"],
     tags: ["turquoise", "statement"],
-    images: ["/brand/products/turquoise-tide-ring.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9r2e-b9fdf1a6eca2-turquoise-tide-ring.jpg"],
     description:
       "A wave of turquoise cabochons across an adjustable open ring. Instant colour, zero effort.",
     materials: "Gold-tone alloy, glass cabochons",
@@ -122,7 +122,7 @@ const PRODUCTS = [
     stockQty: 14,
     vibes: ["Eye Special", "Funky"],
     tags: ["colourful", "drop"],
-    images: ["/brand/products/beaded-cascade-earrings.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9s0m-1391fc80d414-beaded-cascade-earrings.jpg"],
     description:
       "Teal, red and green glass beads cascading on a gold chain. The pair that gets asked about.",
     materials: "Gold-tone alloy, glass beads",
@@ -139,7 +139,7 @@ const PRODUCTS = [
     stockQty: 10,
     vibes: ["Eye Special"],
     tags: ["floral", "green"],
-    images: ["/brand/products/meadow-drop-earrings.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9stm-b3c3a6b466b3-meadow-drop-earrings.jpg"],
     description:
       "A hammered gold flower with a jade-green drop. Delicate on the ear, impossible to ignore.",
     materials: "Gold-tone alloy, resin stone",
@@ -156,7 +156,7 @@ const PRODUCTS = [
     stockQty: 16,
     vibes: ["Queen", "Slay"],
     tags: ["statement", "neutral"],
-    images: ["/brand/products/tortoise-teardrop-earrings.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9toz-278ff2765692-tortoise-teardrop-earrings.jpg"],
     description:
       "Cream and tortoise-shell teardrops on a hammered gold disc. Big shape, neutral palette.",
     materials: "Gold-tone alloy, resin",
@@ -173,7 +173,7 @@ const PRODUCTS = [
     stockQty: 22,
     vibes: ["Eye Special"],
     tags: ["geometric", "multicolour"],
-    images: ["/brand/products/prism-cross-earrings.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9ug5-7ba253521760-prism-cross-earrings.jpg"],
     description:
       "A crystal cross cut from amber, ruby and amethyst baguettes. Sharp geometry, warm colour.",
     materials: "Gold-tone alloy, glass baguette stones, crystal",
@@ -192,7 +192,7 @@ const PRODUCTS = [
     stockQty: 11,
     vibes: ["Baddie", "Funky"],
     tags: ["pink", "heart"],
-    images: ["/brand/products/blush-heart-necklace.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9v6u-471f5eee32d2-blush-heart-necklace.jpg"],
     description:
       "A blush crystal heart halo on a fine gold chain, flanked by pink stones. Soft, unmistakably pink.",
     materials: "Gold-tone alloy, crystal, glass stones",
@@ -209,7 +209,7 @@ const PRODUCTS = [
     stockQty: 13,
     vibes: ["Funky", "Eye Special"],
     tags: ["green", "minimal"],
-    images: ["/brand/products/sea-glass-heart-necklace.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9vyb-b4a710fa6b91-sea-glass-heart-necklace.jpg"],
     description:
       "A polished sea-glass cabochon heart on a barely-there chain, finished with a single crystal.",
     materials: "Gold-tone alloy, glass cabochon, crystal",
@@ -226,7 +226,7 @@ const PRODUCTS = [
     stockQty: 7,
     vibes: ["Queen", "Baddie"],
     tags: ["pink", "halo", "gift"],
-    images: ["/brand/products/crystal-halo-heart-necklace.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9ww1-80a1fc4f33ec-crystal-halo-heart-necklace.jpg"],
     description:
       "A pave halo heart in blush pink and clear crystal, on a fine chain. Ships boxed and ready to gift.",
     materials: "Gold-tone alloy, crystal, glass stones",
@@ -245,7 +245,7 @@ const PRODUCTS = [
     stockQty: 9,
     vibes: ["Slay", "Eye Special"],
     tags: ["multicolour", "stone"],
-    images: ["/brand/products/prism-line-bracelet.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9xpd-060753fa0db1-prism-line-bracelet.jpg"],
     description:
       "A fluid chain of amethyst, citrine and emerald-cut stones in gold. Every link catches light.",
     materials: "Gold-tone alloy, glass stones",
@@ -262,7 +262,7 @@ const PRODUCTS = [
     stockQty: 6,
     vibes: ["Baddie"],
     tags: ["charms", "layering"],
-    images: ["/brand/products/golden-hour-charm-bracelet.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqta0uf-94e6fea235b4-golden-hour-charm-bracelet.jpg"],
     description:
       "Paperclip links loaded with a moon, dragonfly, sun, cherry and bells. Stack it or wear it loud.",
     materials: "Gold-tone alloy",
@@ -279,7 +279,7 @@ const PRODUCTS = [
     stockQty: 10,
     vibes: ["Slay", "Queen"],
     tags: ["red", "statement"],
-    images: ["/brand/products/ruby-road-bracelet.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9yhi-c8800773a121-ruby-road-bracelet.jpg"],
     description:
       "An emerald-cut ruby centre flanked by emerald green and white. Made for the loudest outfit you own.",
     materials: "Gold-tone alloy, glass stones",
@@ -298,7 +298,7 @@ const PRODUCTS = [
     stockQty: 0,
     vibes: ["Baddie", "Funky"],
     tags: ["pink", "tennis"],
-    images: ["/brand/products/blush-tennis-bracelet.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9za1-edae0b6a730b-blush-tennis-bracelet.jpg"],
     description:
       "A line of blush crystal with a pavé charm, on a fine snake chain.",
     materials: "Gold-tone alloy, crystal",
@@ -317,7 +317,7 @@ const PRODUCTS = [
     stockQty: 5,
     vibes: ["Slay", "Baddie"],
     tags: ["cuff", "floral", "statement"],
-    images: ["/brand/products/petal-cuff-arm-bracelet.jpg"],
+    images: ["https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqta01d-05971b7e3adb-petal-cuff-arm-bracelet.jpg"],
     description:
       "An adjustable open cuff with a pink and lilac enamel flower. Sits above the elbow bone.",
     materials: "Gold-tone alloy, enamel, crystal",

@@ -5,6 +5,7 @@ const COLUMNS = [
     title: "Shop",
     links: [
       ["Shop all", "/shop"],
+      ["Wishlist", "/wishlist"],
       ["Track order", "/track"],
       ["Your bag", "/cart"],
       ["Your orders", "/account/orders"],

@@ -4,6 +4,7 @@ import { computeTotals } from "../../../lib/pricing.js";
 import { validateCoupon, CouponError } from "../../../lib/coupons.js";
 import { getCurrentUser } from "../../../lib/guards.js";
 import { prisma } from "../../../lib/prisma.js";
+import { checkRateLimit } from "../../../lib/rate-limit.js";
 
 /**
  * Validate a coupon against the current cart and return the resulting totals.
@@ -22,13 +23,25 @@ export async function POST(request) {
     return NextResponse.json({ error: "That request was not valid JSON." }, { status: 400 });
   }
 
-  const code = typeof body?.code === "string" ? body.code.trim() : "";
+  const code = typeof body?.code === "string" ? body.code.trim().toUpperCase() : "";
   if (!code) {
     return NextResponse.json({ error: "Enter a coupon code first." }, { status: 400 });
   }
 
   const user = await getCurrentUser();
   const userId = user?.id ?? null;
+
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
+  const rl = checkRateLimit(`coupon-apply:${userId ?? ip}`);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { ok: false, error: `Too many attempts. Please wait ${Math.ceil(rl.retryAfterMs / 1000)}s and try again.` },
+      { status: 429 },
+    );
+  }
 
   const { lines, subtotalPaise } = await buildCartLines(body?.items);
   const lineItems = lines.map((line) => ({

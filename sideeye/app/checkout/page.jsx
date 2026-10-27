@@ -92,50 +92,14 @@ export default async function CheckoutPage() {
         Cash on delivery. No prepaid in v1.
       </p>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]">
-        <CheckoutForm
-          lines={lines}
-          totals={totals}
-          suggestions={suggestions}
-          user={user}
-          placeOrder={placeOrder}
-          savedAddresses={savedAddresses}
-        />
-
-        <aside className="rounded-3xl bg-surface p-6 ring-1 ring-neutral-200">
-          <h2 className="font-display text-xl font-bold">Order summary</h2>
-          <dl className="mt-4 space-y-3 text-sm">
-            {lines.map((l) => (
-              <div key={l.slug} className="flex justify-between">
-                <dt>
-                  {l.name} × {l.qty}
-                </dt>
-                <dd className="font-semibold">{formatPaise(l.pricePaise * l.qty)}</dd>
-              </div>
-            ))}
-            <div className="flex justify-between border-t border-neutral-200 pt-3">
-              <dt>Subtotal</dt>
-              <dd className="font-semibold">{formatPaise(totals.subtotalPaise)}</dd>
-            </div>
-            {totals.discountPaise > 0 && (
-              <div className="flex justify-between text-green-700">
-                <dt>Discount</dt>
-                <dd>-{formatPaise(totals.discountPaise)}</dd>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <dt>Shipping</dt>
-              <dd className="font-semibold">
-                {totals.shippingPaise === 0 ? "Free" : formatPaise(totals.shippingPaise)}
-              </dd>
-            </div>
-            <div className="flex justify-between border-t border-neutral-200 pt-3 text-lg font-bold">
-              <dt>Total</dt>
-              <dd>{formatPaise(totals.totalPaise)}</dd>
-            </div>
-          </dl>
-        </aside>
-      </div>
+      <CheckoutForm
+        lines={lines}
+        totals={totals}
+        suggestions={suggestions}
+        user={user}
+        placeOrder={placeOrder}
+        savedAddresses={savedAddresses}
+      />
     </div>
   );
 }

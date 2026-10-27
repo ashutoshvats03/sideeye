@@ -12,6 +12,20 @@
 /** The five locked vibe labels (spec §7). Anything outside this set is not a real filter. */
 export const PRODUCT_VIBES = ["Eye Special", "Funky", "Queen", "Slay", "Baddie"];
 
+/**
+ * Toggle one vibe in a selection list. Pure so the admin form's pill
+ * behaviour is unit tested: the form must use a real state updater with
+ * this, never pass an updater function into its patch-style `set`.
+ *
+ * @param {unknown} vibes current selection (tolerates non-arrays)
+ * @param {string} vibe vibe to add or remove
+ * @returns {string[]} new selection
+ */
+export function toggleVibeValue(vibes, vibe) {
+  const list = Array.isArray(vibes) ? vibes : [];
+  return list.includes(vibe) ? list.filter((v) => v !== vibe) : [...list, vibe];
+}
+
 /** Shop sort options. Keys are the `sort` URL param values. */
 export const SORTS = {
   newest: "Newest",

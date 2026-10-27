@@ -1,0 +1,3 @@
+$ next build ";" type buildout.txt
+Invalid project directory provided, no such directory: C:\Users\ashutosh vats\opencode\sideeye\;
+error: script "build" exited with code 1

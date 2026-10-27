@@ -1,0 +1,9 @@
+feat: reflect applied coupon in checkout totals
+
+CheckoutForm now keeps an appliedTotals state seeded from the server
+totals, updated from /api/coupon's returned totals on a successful
+apply (and reset when the code is cleared). The order summary and the
+Place order button both read appliedTotals, so the discounted subtotal,
+discount, shipping and total are shown immediately instead of only
+after placing the order. Server-side placeOrder still re-validates the
+coupon from couponCode, so the charged amount is unchanged.

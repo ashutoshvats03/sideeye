@@ -1,5 +1,6 @@
 import { requireAdmin } from "../../../lib/guards.js";
 import { prisma } from "../../../lib/prisma.js";
+import AdminNav from "../nav.jsx";
 import CouponManager from "./manager.jsx";
 
 export const metadata = {
@@ -38,6 +39,7 @@ export default async function AdminCouponsPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
       <h1 className="font-display text-3xl font-extrabold tracking-tight">Coupons</h1>
+      <AdminNav current="/admin/coupons" />
       <p className="mt-2 text-sm text-neutral-600">
         New coupons live for exactly 5 days. Assign a coupon to a user to make it
         personal to their account.

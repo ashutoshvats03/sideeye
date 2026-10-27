@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import AddToCart from "../../../components/AddToCart.jsx";
+import WishlistHeart from "../../../components/WishlistHeart.jsx";
 import Gallery from "../../../components/Gallery.jsx";
 import ProductCard from "../../../components/ProductCard.jsx";
 import Reviews from "../../../components/Reviews.jsx";
@@ -140,6 +141,13 @@ export default async function ProductPage({ params }) {
           ) : null}
 
           <AddToCart product={product} />
+
+          <div className="flex items-center gap-3">
+            <WishlistHeart slug={product.slug} name={product.name} />
+            <p className="text-sm text-neutral-600">
+              Save it for later — your wishlist keeps it one tap away.
+            </p>
+          </div>
 
           <div className="space-y-2">
             <Details summary="Description">

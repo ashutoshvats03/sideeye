@@ -1,16 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPaise } from "../../lib/money.js";
 import { addItem } from "../../lib/cart-storage.js";
+import {
+  DRAFT_KEY,
+  parseDraft,
+  isAddressStepComplete,
+} from "../../lib/checkout-draft.js";
+
+/** Read the persisted draft once (client-only; SSR has no localStorage). */
+function loadDraft() {
+  if (typeof window === "undefined") return null;
+  try {
+    return parseDraft(JSON.parse(window.localStorage.getItem(DRAFT_KEY)));
+  } catch {
+    return null;
+  }
+}
 
 export default function CheckoutForm({ lines, totals, suggestions, user, placeOrder, savedAddresses }) {
   const router = useRouter();
   const saved = Array.isArray(savedAddresses) ? savedAddresses : [];
-  // Preselect the default (first — the server sorts default-first), else new.
-  const [selectedId, setSelectedId] = useState(() => (saved.length > 0 ? saved[0].id : "new"));
-  const [address, setAddress] = useState({
+  // Draft-first init: a shopper who leaves checkout for the cart (qty change)
+  // and comes back sees the address they already typed.
+  const [selectedId, setSelectedId] = useState(() => {
+    const draft = loadDraft();
+    if (draft && (draft.selectedId === "new" || saved.some((a) => a.id === draft.selectedId))) {
+      return draft.selectedId;
+    }
+    return saved.length > 0 ? saved[0].id : "new";
+  });
+  const [address, setAddress] = useState(() => ({
     name: user.name ?? "",
     phone: "",
     line1: "",
@@ -18,11 +40,34 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
     city: "",
     state: "",
     pincode: "",
-  });
-  const [couponCode, setCouponCode] = useState("");
+    ...(loadDraft()?.address ?? {}),
+  }));
+  const [couponCode, setCouponCode] = useState(() => loadDraft()?.couponCode ?? "");
   const [couponMessage, setCouponMessage] = useState(null);
+  const [appliedTotals, setAppliedTotals] = useState(totals);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [step, setStep] = useState(1);
+
+  // Persist the draft on every change so navigating away never loses it.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ selectedId, address, couponCode }));
+    } catch {
+      // Storage full or blocked — checkout still works, the draft just won't survive.
+    }
+  }, [selectedId, address, couponCode]);
+
+  function goNext() {
+    const checked = isAddressStepComplete(selectedId, address);
+    if (!checked.ok) {
+      setError(checked.error);
+      return;
+    }
+    setError(null);
+    setStep(2);
+    window.scrollTo({ top: 0 });
+  }
 
   function update(field) {
     return (e) => setAddress((a) => ({ ...a, [field]: e.target.value }));
@@ -40,8 +85,10 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
     const data = await res.json();
     if (data.ok) {
       setCouponMessage(`Coupon applied: -${formatPaise(data.totals.discountPaise)}`);
+      setAppliedTotals(data.totals);
     } else {
       setCouponMessage(data.error);
+      setAppliedTotals(totals);
     }
   }
 
@@ -66,6 +113,11 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
     });
     setBusy(false);
     if (result.ok) {
+      try {
+        window.localStorage.removeItem(DRAFT_KEY);
+      } catch {
+        // Harmless — a stale draft just preselects next time.
+      }
       router.push(`/order-success?order=${result.orderNumber}`);
     } else {
       setError(result.error);
@@ -73,7 +125,15 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
   }
 
   return (
+    <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]">
     <form onSubmit={submit} className="space-y-6">
+      <ol aria-label="Checkout steps" className="flex gap-2 text-sm font-bold">
+        <li className={step === 1 ? "text-neutral-900" : "text-neutral-400"}>1. Address</li>
+        <li aria-hidden="true" className="text-neutral-300">→</li>
+        <li className={step === 2 ? "text-neutral-900" : "text-neutral-400"}>2. Review &amp; buy</li>
+      </ol>
+      {step === 1 ? (
+      <>
       <section aria-labelledby="address-heading">
         <h2 id="address-heading" className="font-display text-xl font-bold">
           Delivery address
@@ -226,7 +286,16 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
         </div>
         )}
       </section>
-
+      <button
+        type="button"
+        onClick={goNext}
+        className="w-full rounded-2xl bg-neutral-900 px-6 py-4 text-lg font-bold text-white transition hover:bg-black focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+      >
+        Review &amp; buy
+      </button>
+      </>
+      ) : (
+      <>
       <section aria-labelledby="payment-heading">
         <h2 id="payment-heading" className="font-display text-xl font-bold">
           Payment
@@ -250,7 +319,13 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
         <div className="mt-4 flex gap-3">
           <input
             value={couponCode}
-            onChange={(e) => setCouponCode(e.target.value)}
+            onChange={(e) => {
+              setCouponCode(e.target.value);
+              if (!e.target.value.trim()) {
+                setAppliedTotals(totals);
+                setCouponMessage(null);
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter") applyCoupon(e);
             }}
@@ -284,7 +359,10 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
                 <p className="text-sm text-neutral-600">{formatPaise(s.pricePaise)}</p>
                 <button
                   type="button"
-                  onClick={() => addItem(s.slug, 1, { maxQty: 99 })}
+onClick={() => {
+                  addItem(s.slug, 1, { maxQty: 99 });
+                  router.refresh();
+                }}
                   className="mt-2 w-full rounded-lg border-2 border-neutral-900 py-1.5 text-sm font-bold transition hover:bg-neutral-900 hover:text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
                 >
                   Add
@@ -301,13 +379,61 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={busy}
-        className="w-full rounded-2xl bg-brand px-6 py-4 text-lg font-bold text-white transition hover:bg-brand-dark disabled:opacity-50 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
-      >
-        {busy ? "Placing order…" : `Place order · ${formatPaise(totals.totalPaise)}`}
-      </button>
-    </form>
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            setStep(1);
+            window.scrollTo({ top: 0 });
+          }}
+          className="rounded-2xl border-2 border-neutral-900 px-6 py-4 text-lg font-bold transition hover:bg-neutral-100 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+        >
+          ← Previous
+        </button>
+        <button
+          type="submit"
+          disabled={busy}
+          className="flex-1 rounded-2xl bg-brand px-6 py-4 text-lg font-bold text-white transition hover:bg-brand-dark disabled:opacity-50 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+        >
+          {busy ? "Placing order…" : `Place order · ${formatPaise(appliedTotals.totalPaise)}`}
+        </button>
+      </div>
+      </>
+      )}
+      </form>
+      <aside className="rounded-3xl bg-surface p-6 ring-1 ring-neutral-200 h-fit">
+        <h2 className="font-display text-xl font-bold">Order summary</h2>
+        <dl className="mt-4 space-y-3 text-sm">
+          {lines.map((l) => (
+            <div key={l.slug} className="flex justify-between">
+              <dt>
+                {l.name} × {l.qty}
+              </dt>
+              <dd className="font-semibold">{formatPaise(l.pricePaise * l.qty)}</dd>
+            </div>
+          ))}
+          <div className="flex justify-between border-t border-neutral-200 pt-3">
+            <dt>Subtotal</dt>
+            <dd className="font-semibold">{formatPaise(appliedTotals.subtotalPaise)}</dd>
+          </div>
+          {appliedTotals.discountPaise > 0 && (
+            <div className="flex justify-between text-green-700">
+              <dt>Discount</dt>
+              <dd>-{formatPaise(appliedTotals.discountPaise)}</dd>
+            </div>
+          )}
+          <div className="flex justify-between">
+            <dt>Shipping</dt>
+            <dd className="font-semibold">
+              {appliedTotals.shippingPaise === 0 ? "Free" : formatPaise(appliedTotals.shippingPaise)}
+            </dd>
+          </div>
+          <div className="flex justify-between border-t border-neutral-200 pt-3 text-lg font-bold">
+            <dt>Total</dt>
+            <dd>{formatPaise(appliedTotals.totalPaise)}</dd>
+          </div>
+        </dl>
+      </aside>
+    </div>
   );
 }

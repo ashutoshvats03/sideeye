@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 import { prisma } from "../lib/prisma.js";
 import { getCurrentUser } from "../lib/guards.js";
 import { validateCoupon, CouponError } from "../lib/coupons.js";
@@ -50,7 +51,7 @@ const placeOrderSchema = z.object({
     .max(50),
   addressId: z.string().trim().optional(),
   address: addressSchema.optional(),
-  couponCode: z.preprocess((v) => v ?? "", z.string().trim().max(50)),
+  couponCode: z.preprocess((v) => (typeof v === "string" ? v.trim().toUpperCase() : ""), z.string().max(50)),
   idempotencyKey: z
     .string()
     .trim()
@@ -387,5 +388,7 @@ export async function cancelOrder(input) {
     return { ok: false, error: "Something went wrong. Please try again." };
   }
 
+  revalidatePath("/account/orders");
+  revalidatePath(`/account/orders/${order.number}`);
   return { ok: true };
 }

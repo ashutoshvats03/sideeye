@@ -20,11 +20,27 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "./lib/auth.config.js";
 import { loginUrlFor, requiresAuth } from "./lib/protected.js";
+import { checkRateLimit } from "./lib/rate-limit.js";
 
 const { auth } = NextAuth(authConfig);
 
 export default auth((request) => {
   const { pathname, search } = request.nextUrl;
+
+  // Rate-limit auth endpoints (login attempts) by IP to slow brute-force.
+  if (pathname.startsWith("/api/auth")) {
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    const rl = checkRateLimit(`login:${ip}`);
+    if (!rl.allowed) {
+      return new NextResponse("Too many requests", {
+        status: 429,
+        headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) },
+      });
+    }
+  }
 
   // Expose the current path to server components (SiteHeader builds a
   // callbackUrl-preserving Log in link from it). Server-set, but consumers

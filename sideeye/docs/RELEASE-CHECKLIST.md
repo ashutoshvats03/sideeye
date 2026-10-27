@@ -202,18 +202,23 @@ before auto-filling (a city-level match is not enough for delivery).
 
 ### 5.6 `[ ]` Browser storage audit (localStorage) before release
 
-Yes — the app uses `localStorage`, for exactly one thing today: **the cart**. Audit result, so this
-does not need re-discovering at release time:
+Yes — the app uses `localStorage`, for exactly three things today: **the cart**, **the
+wishlist**, and **the checkout address draft**. Audit result, so this does not need
+re-discovering at release time:
 
 | Store | Key | Payload | Written by |
 | --- | --- | --- | --- |
 | `localStorage` | `sideeye.cart.v1` | `[{ slug, qty }]` | `lib/cart-storage.js` |
+| `localStorage` | `sideeye.wishlist.v1` | `[slug]` | `lib/wishlist.js` |
+| `localStorage` | `sideeye-checkout-draft` | `{ selectedId, address, couponCode }` | `app/checkout/CheckoutForm.jsx` |
 | cookie (mirror, not `HttpOnly`) | `sideeye.cart.v1` | same, URI-encoded | `lib/cart-storage.js` `writeCookieMirror()` |
 
-No prices, names, stock or PII are stored — slugs and quantities only. That is deliberate: the
-server re-reads price and stock from Postgres at checkout (`lib/cart-lines.js` → `computeTotals`),
-so a hand-edited `localStorage` value cannot change what a shopper is charged. This is already
-covered by `lib/cart.test.js` and `lib/cart-storage.test.js`.
+No prices, names, stock or PII are stored — slugs and quantities only, plus the shopper's own
+draft address they typed (kept client-side so leaving checkout for the cart never loses it; it
+is cleared on successful order and never trusted — the server revalidates at `placeOrder`). That
+is deliberate: the server re-reads price and stock from Postgres at checkout (`lib/cart-lines.js`
+→ `computeTotals`), so a hand-edited `localStorage` value cannot change what a shopper is
+charged. This is already covered by `lib/cart.test.js` and `lib/cart-storage.test.js`.
 
 Check these on a real phone before pushing:
 
@@ -235,6 +240,5 @@ Check these on a real phone before pushing:
 - [ ] **No PII ever lands in storage.** Confirm no future change writes an address, phone or email
       into `localStorage` — checkout address fields must stay server-side only.
 
-Note: the wishlist in Plan 06 will add a **second** `localStorage` key, so re-run this audit after
-that lands rather than assuming this table is still complete.
+Audit landed with the wishlist (3 keys, table above) — re-run only if another key appears.
 

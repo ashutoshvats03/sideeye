@@ -247,6 +247,42 @@ export async function assignCouponToUser(input) {
   return { ok: true };
 }
 
+/**
+ * Assign a coupon to every active user at once ("coupons for ALL"). Creates a
+ * UserCoupon row for each active user so per-user coupons become available to
+ * everyone without typing each email.
+ */
+export async function assignCouponToAllUsers(input) {
+  const gate = await requireAdminAction();
+  if (gate.error) return { ok: false, error: gate.error };
+
+  const parsed = z.object({ couponId: z.string().trim().min(1) }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid assignment." };
+
+  const coupon = await prisma.coupon.findUnique({
+    where: { id: parsed.data.couponId },
+    select: { id: true, code: true },
+  });
+  if (!coupon) return { ok: false, error: "Coupon not found." };
+
+  const users = await prisma.user.findMany({
+    where: { isActive: true },
+    select: { id: true },
+  });
+
+  await prisma.$transaction(
+    users.map((u) =>
+      prisma.userCoupon.upsert({
+        where: { userId_couponId: { userId: u.id, couponId: coupon.id } },
+        create: { userId: u.id, couponId: coupon.id, useCount: 0 },
+        update: {},
+      }),
+    ),
+  );
+  revalidatePath("/admin/coupons");
+  return { ok: true, count: users.length };
+}
+
 // ---------------------------------------------------------------------------
 // Reviews
 // ---------------------------------------------------------------------------

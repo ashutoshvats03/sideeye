@@ -30,7 +30,7 @@ function ShopEmptyState({ state, categories }) {
           brand tile (same treatment as the home hero) rather than a cut-out. Without the
           tile it dissolves into the light surface and reads as a missing image. */}
       <Image
-        src="/brand/mascot-queen.png"
+        src="https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqtbhtz-b512b7396307-mascot-queen.png"
         alt=""
         width={800}
         height={800}

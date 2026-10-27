@@ -1,5 +1,6 @@
 import { requireAdmin } from "../../../lib/guards.js";
 import { prisma } from "../../../lib/prisma.js";
+import AdminNav from "../nav.jsx";
 import ProductManager from "./manager.jsx";
 
 export const metadata = {
@@ -40,6 +41,7 @@ export default async function AdminProductsPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
       <h1 className="font-display text-3xl font-extrabold tracking-tight">Products</h1>
+      <AdminNav current="/admin/products" />
       <p className="mt-2 text-sm text-neutral-600">
         {products.length} product(s) · {categories.length} categor(ies). Prices are in
         rupees below and stored as integer paise.
