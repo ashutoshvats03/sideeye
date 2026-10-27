@@ -105,7 +105,7 @@ function Hero() {
             deliberate rounded brand tile rather than a cut-out. */}
         <div className="relative mx-auto w-full max-w-sm">
           <Image
-            src="/brand/mascot-queen.png"
+            src="https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqtbhtz-b512b7396307-mascot-queen.png"
             alt="SideEye mascot"
             width={800}
             height={800}
@@ -138,7 +138,7 @@ function buildSlides(products) {
   }
 
   slides.push({
-    src: "/brand/lifestyle/ring-on-red-satin.jpg",
+    src: "https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqt9ouo-d6cfd9a43496-ring-on-red-satin.jpg",
     alt: "SideEye ring styled on red satin",
     caption: "Styled, not stashed.",
     href: "/shop",

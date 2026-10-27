@@ -38,7 +38,7 @@ export default async function SiteHeader() {
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2 h-20 scale-150">
           <Image
-            src="/brand/brand_logo.png"
+            src="https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqtbh4z-32e8064de49b-brand_logo.png"
             alt="SideEye"
             width={106}
             height={106}

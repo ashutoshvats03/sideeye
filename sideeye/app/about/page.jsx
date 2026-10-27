@@ -15,7 +15,7 @@ export default function AboutPage() {
         Jewellery that gets you a second look.
       </h1>
       <Image
-        src="/brand/about-mascot.jpg"
+        src="https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqtbiu0-9eca55d61dbf-about-mascot.jpg"
         alt="SideEye mascot showing off anti-tarnish jewellery"
         width={1024}
         height={1024}

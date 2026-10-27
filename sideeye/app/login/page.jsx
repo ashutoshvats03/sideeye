@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }) {
     <div className="flex flex-col items-center justify-center px-6 py-16">
       <div className="w-full max-w-md text-center">
         <Image
-          src="/brand/logo-lockup-red.png"
+          src="https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqtbjxa-8fc6fa55b47b-logo-lockup-red.png"
           alt="SideEye"
           width={112}
           height={112}

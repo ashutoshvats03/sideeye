@@ -112,7 +112,7 @@ export default function CartClient() {
       <div className="mx-auto max-w-md py-16 text-center">
         <div className="mx-auto mb-6 h-24 w-24 overflow-hidden rounded-2xl shadow-md ring-1 ring-neutral-200">
           <Image
-            src="/brand/mascot-queen.png"
+            src="https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqtbhtz-b512b7396307-mascot-queen.png"
             alt=""
             width={192}
             height={192}

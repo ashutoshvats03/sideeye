@@ -8,7 +8,7 @@
  */
 
 /** Shown whenever a product has no usable photo of its own. */
-export const FALLBACK_PRODUCT_IMAGE = "/brand/product-ring-red-stone.jpg";
+export const FALLBACK_PRODUCT_IMAGE = "https://pub-7da2b46a971b4215a26bfa306fa51d1d.r2.dev/mvqtbjdb-859810e1e784-product-ring-red-stone.jpg";
 
 /**
  * First usable photo, or the brand fallback.
