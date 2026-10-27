@@ -29,7 +29,7 @@ export const authConfig = {
   // or the session cookie lands on a host the browser is not on.
   trustHost: true,
 
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: 10 * 24 * 60 * 60 }, // 10 days per login
 
   providers: [
     // Use the Google() helper rather than a hand-rolled provider object: the helper

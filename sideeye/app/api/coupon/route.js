@@ -22,7 +22,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "That request was not valid JSON." }, { status: 400 });
   }
 
-  const code = typeof body?.code === "string" ? body.code.trim() : "";
+  const code = typeof body?.code === "string" ? body.code.trim().toUpperCase() : "";
   if (!code) {
     return NextResponse.json({ error: "Enter a coupon code first." }, { status: 400 });
   }
