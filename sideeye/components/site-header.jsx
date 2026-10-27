@@ -38,19 +38,13 @@ export default async function SiteHeader() {
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/brand/logo-lockup-red.png"
+            src="/brand/brand_logo.png"
             alt="SideEye"
             width={96}
             height={96}
             preload
-            className="h-10 w-10 rounded-xl object-cover"
+            className="h-10 w-auto object-contain"
           />
-          {/* The wordmark is the first thing to go below `sm`: it is the widest item in the
-              header row, and on a 360px phone the signed-in nav (Shop + Bag + Account + Log
-              out) needs that width or the whole page scrolls sideways. The logo mark stays. */}
-          <span className="hidden font-display text-xl font-extrabold tracking-tight text-neutral-900 sm:inline">
-            SideEye
-          </span>
         </Link>
 
         <nav aria-label="Primary" className="flex items-center gap-1 sm:gap-3">
