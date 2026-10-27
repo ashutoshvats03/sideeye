@@ -44,6 +44,7 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
   }));
   const [couponCode, setCouponCode] = useState(() => loadDraft()?.couponCode ?? "");
   const [couponMessage, setCouponMessage] = useState(null);
+  const [appliedTotals, setAppliedTotals] = useState(totals);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState(1);
@@ -84,8 +85,10 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
     const data = await res.json();
     if (data.ok) {
       setCouponMessage(`Coupon applied: -${formatPaise(data.totals.discountPaise)}`);
+      setAppliedTotals(data.totals);
     } else {
       setCouponMessage(data.error);
+      setAppliedTotals(totals);
     }
   }
 
@@ -122,6 +125,7 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
   }
 
   return (
+    <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]">
     <form onSubmit={submit} className="space-y-6">
       <ol aria-label="Checkout steps" className="flex gap-2 text-sm font-bold">
         <li className={step === 1 ? "text-neutral-900" : "text-neutral-400"}>1. Address</li>
@@ -315,7 +319,13 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
         <div className="mt-4 flex gap-3">
           <input
             value={couponCode}
-            onChange={(e) => setCouponCode(e.target.value)}
+            onChange={(e) => {
+              setCouponCode(e.target.value);
+              if (!e.target.value.trim()) {
+                setAppliedTotals(totals);
+                setCouponMessage(null);
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter") applyCoupon(e);
             }}
@@ -382,11 +392,45 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
           disabled={busy}
           className="flex-1 rounded-2xl bg-brand px-6 py-4 text-lg font-bold text-white transition hover:bg-brand-dark disabled:opacity-50 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
         >
-          {busy ? "Placing order…" : `Place order · ${formatPaise(totals.totalPaise)}`}
+          {busy ? "Placing order…" : `Place order · ${formatPaise(appliedTotals.totalPaise)}`}
         </button>
       </div>
       </>
       )}
-    </form>
+      </form>
+      <aside className="rounded-3xl bg-surface p-6 ring-1 ring-neutral-200 h-fit">
+        <h2 className="font-display text-xl font-bold">Order summary</h2>
+        <dl className="mt-4 space-y-3 text-sm">
+          {lines.map((l) => (
+            <div key={l.slug} className="flex justify-between">
+              <dt>
+                {l.name} × {l.qty}
+              </dt>
+              <dd className="font-semibold">{formatPaise(l.pricePaise * l.qty)}</dd>
+            </div>
+          ))}
+          <div className="flex justify-between border-t border-neutral-200 pt-3">
+            <dt>Subtotal</dt>
+            <dd className="font-semibold">{formatPaise(appliedTotals.subtotalPaise)}</dd>
+          </div>
+          {appliedTotals.discountPaise > 0 && (
+            <div className="flex justify-between text-green-700">
+              <dt>Discount</dt>
+              <dd>-{formatPaise(appliedTotals.discountPaise)}</dd>
+            </div>
+          )}
+          <div className="flex justify-between">
+            <dt>Shipping</dt>
+            <dd className="font-semibold">
+              {appliedTotals.shippingPaise === 0 ? "Free" : formatPaise(appliedTotals.shippingPaise)}
+            </dd>
+          </div>
+          <div className="flex justify-between border-t border-neutral-200 pt-3 text-lg font-bold">
+            <dt>Total</dt>
+            <dd>{formatPaise(appliedTotals.totalPaise)}</dd>
+          </div>
+        </dl>
+      </aside>
+    </div>
   );
 }
