@@ -20,9 +20,6 @@ export default function CartClient() {
   const [lines, setLines] = useState(null); // null = still loading
   const [totals, setTotals] = useState(null);
   const [loadError, setLoadError] = useState(false);
-  const [couponCode, setCouponCode] = useState("");
-  const [couponMsg, setCouponMsg] = useState(null); // { ok: boolean, text: string }
-  const [couponTotals, setCouponTotals] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const fetchCart = useCallback(async (cart = readCart()) => {
@@ -72,56 +69,20 @@ export default function CartClient() {
     }
   }
 
-  // A coupon is only valid against a specific cart. Any edit invalidates it, so the
-  // displayed discount is dropped rather than left applied to a cart it was not checked
-  // against.
-  function invalidateCoupon() {
-    setCouponMsg(null);
-    setCouponTotals(null);
-  }
-
   async function changeQty(slug, qty) {
     const next = updateItem(slug, qty);
-    invalidateCoupon();
     await refresh(next);
   }
 
   async function dropLine(slug) {
     const next = removeItem(slug);
-    invalidateCoupon();
     await refresh(next);
   }
 
   async function clearBag() {
     if (!window.confirm("Remove everything from your bag?")) return;
     const next = clearCart();
-    invalidateCoupon();
     await refresh(next);
-  }
-
-  async function applyCoupon(event) {
-    event.preventDefault();
-    setBusy(true);
-    setCouponMsg(null);
-    try {
-      const res = await fetch("/api/coupon", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: couponCode, items: readCart() }),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        setCouponMsg({ ok: true, text: `Coupon ${data.coupon.code} applied.` });
-        setCouponTotals(data.totals);
-      } else {
-        setCouponMsg({ ok: false, text: data.error || "That coupon did not work." });
-        setCouponTotals(null);
-      }
-    } catch {
-      setCouponMsg({ ok: false, text: "Could not check that coupon. Try again." });
-    } finally {
-      setBusy(false);
-    }
   }
 
   if (lines === null && loadError) {
@@ -173,7 +134,7 @@ export default function CartClient() {
     );
   }
 
-  const shown = couponTotals ?? totals;
+  const shown = totals;
   const remaining = FREE_SHIPPING_ABOVE_PAISE - shown.subtotalPaise;
   const progress = Math.min(1, shown.subtotalPaise / FREE_SHIPPING_ABOVE_PAISE);
 
@@ -299,40 +260,6 @@ export default function CartClient() {
             />
           </div>
         </div>
-
-        <form onSubmit={applyCoupon} className="mt-5">
-          <label htmlFor="coupon" className="text-sm font-semibold">
-            Coupon code
-          </label>
-          <div className="mt-1 flex gap-2">
-            <input
-              id="coupon"
-              name="code"
-              value={couponCode}
-              onChange={(event) => setCouponCode(event.target.value)}
-              placeholder="e.g. FIRST10"
-              autoComplete="off"
-              className="min-w-0 flex-1 rounded-xl border-2 border-neutral-300 px-3 py-2 uppercase placeholder:normal-case focus:border-brand focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={busy || !couponCode.trim()}
-              className="rounded-xl bg-neutral-900 px-4 py-2 font-bold text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
-            >
-              Apply
-            </button>
-          </div>
-          {couponMsg ? (
-            <p
-              role="status"
-              className={`mt-2 text-sm ${
-                couponMsg.ok ? "text-brand-dark" : "text-red-700"
-              }`}
-            >
-              {couponMsg.text}
-            </p>
-          ) : null}
-        </form>
 
         <dl className="mt-5 space-y-2 border-t border-neutral-200 pt-4 text-sm">
           <div className="flex justify-between">

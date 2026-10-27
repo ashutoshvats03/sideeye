@@ -20,6 +20,7 @@ import {
   updateCoupon,
   setCouponActive,
   assignCouponToUser,
+  assignCouponToAllUsers,
 } from "../../../actions/admin-ops.js";
 
 const inputCls =
@@ -31,7 +32,7 @@ export default function CouponManager({ initialCoupons }) {
   const [form, setForm] = useState(emptyCouponForm);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState(null);
-  const [assign, setAssign] = useState({ couponId: "", userEmail: "" });
+  const [assign, setAssign] = useState({ couponId: "", userEmail: "", forAll: false });
   const [assignBusy, setAssignBusy] = useState(false);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
@@ -87,20 +88,28 @@ export default function CouponManager({ initialCoupons }) {
 
   async function handleAssign(e) {
     e.preventDefault();
-    if (!assign.couponId || !assign.userEmail.trim()) return;
+    if (!assign.couponId) return;
+    if (!assign.forAll && !assign.userEmail.trim()) return;
     setAssignBusy(true);
     setMessage(null);
-    const result = await assignCouponToUser({
-      couponId: assign.couponId,
-      userEmail: assign.userEmail.trim(),
-    });
+    const result = assign.forAll
+      ? await assignCouponToAllUsers({ couponId: assign.couponId })
+      : await assignCouponToUser({
+          couponId: assign.couponId,
+          userEmail: assign.userEmail.trim(),
+        });
     setAssignBusy(false);
     if (!result.ok) {
       setMessage({ ok: false, text: result.error });
       return;
     }
-    setMessage({ ok: true, text: `Assigned to ${assign.userEmail.trim()}.` });
-    setAssign({ couponId: "", userEmail: "" });
+    setMessage({
+      ok: true,
+      text: assign.forAll
+        ? `Assigned to all users${result.count != null ? ` (${result.count})` : ""}.`
+        : `Assigned to ${assign.userEmail.trim()}.`,
+    });
+    setAssign({ couponId: "", userEmail: "", forAll: false });
   }
 
   return (
@@ -242,11 +251,20 @@ export default function CouponManager({ initialCoupons }) {
               type="email"
               value={assign.userEmail}
               onChange={(e) => setAssign((a) => ({ ...a, userEmail: e.target.value }))}
-              required
+              required={!assign.forAll}
+              disabled={assign.forAll}
               placeholder="shopper@example.com"
             />
           </label>
         </div>
+        <label className="mt-2 flex items-center gap-2 text-sm font-bold">
+          <input
+            type="checkbox"
+            checked={assign.forAll}
+            onChange={(e) => setAssign((a) => ({ ...a, forAll: e.target.checked }))}
+          />
+          All users
+        </label>
         <button
           type="submit"
           disabled={assignBusy}
