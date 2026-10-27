@@ -359,7 +359,10 @@ export default function CheckoutForm({ lines, totals, suggestions, user, placeOr
                 <p className="text-sm text-neutral-600">{formatPaise(s.pricePaise)}</p>
                 <button
                   type="button"
-                  onClick={() => addItem(s.slug, 1, { maxQty: 99 })}
+onClick={() => {
+                  addItem(s.slug, 1, { maxQty: 99 });
+                  router.refresh();
+                }}
                   className="mt-2 w-full rounded-lg border-2 border-neutral-900 py-1.5 text-sm font-bold transition hover:bg-neutral-900 hover:text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
                 >
                   Add
