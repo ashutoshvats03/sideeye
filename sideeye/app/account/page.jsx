@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "../../lib/guards.js";
+import { signOutAction } from "../actions.js";
 import ProfileForm from "./profile-form.jsx";
 
 export const metadata = {
@@ -106,6 +107,15 @@ export default async function AccountPage() {
           <p className="mt-1 text-sm text-neutral-600">Track and revisit your orders.</p>
         </Link>
       </nav>
+
+      <form action={signOutAction} className="mt-6">
+        <button
+          type="submit"
+          className="rounded-2xl border-2 border-neutral-900 px-6 py-2.5 font-bold text-neutral-900 transition hover:bg-neutral-900 hover:text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+        >
+          Log out
+        </button>
+      </form>
     </div>
   );
 }

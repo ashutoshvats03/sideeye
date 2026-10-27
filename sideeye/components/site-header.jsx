@@ -4,7 +4,6 @@ import { headers } from "next/headers";
 import { getCurrentUser } from "../lib/guards.js";
 import { sanitizeCallbackUrl } from "../lib/protected.js";
 import { isAdminRole } from "../lib/roles.js";
-import { signOutAction } from "../app/actions.js";
 import CartBadge from "./CartBadge.jsx";
 
 /**
@@ -55,22 +54,17 @@ export default async function SiteHeader() {
         </Link>
 
         <nav aria-label="Primary" className="flex items-center gap-1 sm:gap-3">
-          <Link
-            href="/shop"
-            className="rounded-lg px-2 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 sm:px-3"
-          >
-            Shop
-          </Link>
-
           <CartBadge />
 
           <Link
             href="/wishlist"
             aria-label="Wishlist"
             title="Wishlist"
-            className="rounded-lg px-2 py-2 text-lg font-semibold text-neutral-700 hover:bg-neutral-100 sm:px-3"
+            className="rounded-lg px-2 py-2 text-neutral-700 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red sm:px-3"
           >
-            <span aria-hidden="true">♡</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
           </Link>
 
           {user ? (
@@ -78,25 +72,27 @@ export default async function SiteHeader() {
               {isAdminRole(user.role) ? (
                 <Link
                   href="/admin"
-                  className="rounded-lg px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+                  aria-label="Admin"
+                  title="Admin"
+                  className="rounded-lg px-2 py-2 text-neutral-700 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red sm:px-3"
                 >
-                  Admin
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
                 </Link>
               ) : null}
               <Link
                 href="/account"
-                className="min-w-0 max-w-[6rem] truncate rounded-lg px-2 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 sm:max-w-[10rem] sm:px-3"
+                aria-label={user.name || "Account"}
+                title={user.name || "Account"}
+                className="rounded-lg px-2 py-2 text-neutral-700 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red sm:px-3"
               >
-                {user.name || "Account"}
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
               </Link>
-              <form action={signOutAction}>
-                <button
-                  type="submit"
-                  className="rounded-lg border-2 border-neutral-900 px-2 py-2 text-sm font-bold text-neutral-900 transition hover:bg-neutral-900 hover:text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-brand-red sm:px-3"
-                >
-                  Log out
-                </button>
-              </form>
             </>
           ) : isLoginPage ? null : (
             <Link
